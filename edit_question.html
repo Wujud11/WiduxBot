@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تعديل السؤال - بوت وج؟</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+            padding-top: 20px;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .card-header {
+            border-radius: 10px 10px 0 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0">تعديل السؤال</h3>
+                    </div>
+                    <div class="card-body">
+                        <form action="{{ url_for('edit_question', id=question.id) }}" method="post">
+                            <div class="mb-3">
+                                <label for="text" class="form-label">نص السؤال</label>
+                                <input type="text" class="form-control" id="text" name="text" value="{{ question.text }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="answer" class="form-label">الإجابة</label>
+                                <input type="text" class="form-control" id="answer" name="answer" value="{{ question.answer }}" required>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="category" class="form-label">الفئة</label>
+                                        <select class="form-select" id="category" name="category">
+                                            {% for category in categories %}
+                                            <option value="{{ category }}" {% if category == question.category %}selected{% endif %}>{{ category }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="question_type" class="form-label">نوع السؤال</label>
+                                        <select class="form-select" id="question_type" name="question_type">
+                                            <option value="normal" {% if question.question_type == 'normal' %}selected{% endif %}>عادي</option>
+                                            <option value="golden" {% if question.question_type == 'golden' %}selected{% endif %}>ذهبي</option>
+                                            <option value="steal" {% if question.question_type == 'steal' %}selected{% endif %}>زرف</option>
+                                            <option value="doom" {% if question.question_type == 'doom' %}selected{% endif %}>دووم</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="difficulty" class="form-label">مستوى الصعوبة</label>
+                                        <select class="form-select" id="difficulty" name="difficulty">
+                                            <option value="1" {% if question.difficulty == 1 %}selected{% endif %}>سهل</option>
+                                            <option value="2" {% if question.difficulty == 2 %}selected{% endif %}>متوسط</option>
+                                            <option value="3" {% if question.difficulty == 3 %}selected{% endif %}>صعب</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <a href="{{ url_for('questions') }}" class="btn btn-secondary">إلغاء</a>
+                                <button type="submit" class="btn btn-success">حفظ التغييرات</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

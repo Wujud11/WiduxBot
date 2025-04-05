@@ -1,0 +1,204 @@
+{% extends 'layout.html' %}
+
+{% block title %}إعدادات البوت{% endblock %}
+
+{% block content %}
+<h1 class="mb-4 rtl-text arabic-heading">إعدادات بوت وج؟</h1>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card bg-dark text-light">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i> إضافة البوت إلى قناتك</h5>
+            </div>
+            <div class="card-body">
+                <form id="add-channel-form" method="POST" action="{{ url_for('configure') }}">
+                    <div class="mb-3">
+                        <label for="channel" class="form-label">اسم قناة تويتش</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fab fa-twitch"></i></span>
+                            <input type="text" class="form-control" id="channel" name="channel" placeholder="ادخل اسم قناتك" required>
+                        </div>
+                        <div class="form-text text-muted">أدخل اسم قناتك على تويتش بدون الـ @</div>
+                    </div>
+                    <button type="submit" name="add_channel" class="btn btn-primary btn-add-channel">
+                        <i class="fas fa-plus-circle me-2"></i> إضافة القناة
+                    </button>
+                </form>
+                
+                <hr class="my-4">
+                
+                <h6 class="mb-3">القنوات النشطة حالياً:</h6>
+                {% if active_channels %}
+                    <div class="table-responsive">
+                        <table class="table table-dark">
+                            <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">اسم القناة</th>
+                                    <th scope="col">العمليات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for channel in active_channels %}
+                                <tr>
+                                    <th scope="row">{{ loop.index }}</th>
+                                    <td>{{ channel }}</td>
+                                    <td>
+                                        <form method="POST" action="{{ url_for('configure') }}" class="d-inline">
+                                            <input type="hidden" name="channel" value="{{ channel }}">
+                                            <button type="submit" name="remove_channel" class="btn btn-sm btn-danger remove-channel-btn">
+                                                <i class="fas fa-trash"></i> حذف
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-dark">
+                        لا توجد قنوات نشطة حالياً. قم بإضافة قناة من النموذج أعلاه.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card bg-dark text-light">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-cog me-2"></i> تخصيص الرسائل</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('configure') }}">
+                    <div class="mb-3">
+                        <label for="welcome_message" class="form-label">رسالة الترحيب</label>
+                        <textarea class="form-control custom-message-input" id="welcome_message" name="welcome_message" 
+                                  rows="2" data-preview="welcome-preview">{{ custom_messages.welcome_message }}</textarea>
+                        <div class="form-text text-muted">الرسالة التي يتم عرضها عند كتابة "وج؟"</div>
+                        <div class="card bg-secondary mt-2 p-2">
+                            <small class="text-light">المعاينة: <span id="welcome-preview">{{ custom_messages.welcome_message }}</span></small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="winner_message" class="form-label">رسالة الفائز</label>
+                        <input type="text" class="form-control custom-message-input" id="winner_message" name="winner_message" 
+                               value="{{ custom_messages.winner_message }}" data-preview="winner-preview">
+                        <div class="card bg-secondary mt-2 p-2">
+                            <small class="text-light">المعاينة: <span id="winner-preview">{{ custom_messages.winner_message }}</span></small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="loser_message" class="form-label">رسالة الخاسر</label>
+                        <input type="text" class="form-control custom-message-input" id="loser_message" name="loser_message" 
+                               value="{{ custom_messages.loser_message }}" data-preview="loser-preview">
+                        <div class="card bg-secondary mt-2 p-2">
+                            <small class="text-light">المعاينة: <span id="loser-preview">{{ custom_messages.loser_message }}</span></small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="low_score_message" class="form-label">رسالة النقاط المنخفضة</label>
+                        <input type="text" class="form-control custom-message-input" id="low_score_message" name="low_score_message" 
+                               value="{{ custom_messages.low_score_message }}" data-preview="low-score-preview">
+                        <div class="card bg-secondary mt-2 p-2">
+                            <small class="text-light">المعاينة: <span id="low-score-preview">{{ custom_messages.low_score_message }}</span></small>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" name="update_messages" class="btn btn-success">
+                        <i class="fas fa-save me-2"></i> حفظ التغييرات
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card bg-dark text-light">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-question-circle me-2"></i> أنواع الأسئلة الخاصة</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-dark gold-question rtl-text equal-height">
+                            <div class="card-body">
+                                <h5 class="card-title text-warning">سؤال الذهب</h5>
+                                <p class="card-text">الإجابة الصحيحة تمنح 50 نقطة.</p>
+                                <p class="card-text"><small>فرصة ظهور: 20%</small></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-dark steal-question rtl-text equal-height">
+                            <div class="card-body">
+                                <h5 class="card-title text-danger">سؤال الزرف</h5>
+                                <p class="card-text">اختر "زرف" لخصم نقاط من الفريق الآخر أو "زود" لمضاعفة نقاطك.</p>
+                                <p class="card-text"><small>متاح في وضع "تيم" بنسبة 30%</small></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-dark doom-question rtl-text equal-height">
+                            <div class="card-body">
+                                <h5 class="card-title">سؤال الدووم</h5>
+                                <p class="card-text">الإجابة الصحيحة تضاعف النقاط والخاطئة تخسرك كل النقاط!</p>
+                                <p class="card-text"><small>فرصة ظهور: 10%</small></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-dark fate-question rtl-text equal-height">
+                            <div class="card-body">
+                                <h5 class="card-title text-primary">اختبار المصير</h5>
+                                <p class="card-text">5 أسئلة متتالية. صحيح: +10، خطأ: -5</p>
+                                <p class="card-text"><small>فرصة ظهور: 15%</small></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card bg-dark text-light">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> معلومات البوت</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>إحصائيات:</h6>
+                        <ul class="list-group list-group-flush bg-transparent">
+                            <li class="list-group-item bg-transparent text-light border-secondary d-flex justify-content-between">
+                                <span>القنوات النشطة:</span>
+                                <span id="channel-count">{{ active_channels|length }}</span>
+                            </li>
+                            <li class="list-group-item bg-transparent text-light border-secondary d-flex justify-content-between">
+                                <span>حالة البوت:</span>
+                                <span class="badge bg-success">متصل</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>دليل الاستخدام:</h6>
+                        <p>لبدء اللعبة في قناتك، قم بكتابة "وج؟" في الدردشة لعرض قائمة الأنماط المتاحة.</p>
+                        <p>يمكنك تخصيص الرسائل والإعدادات من هذه الصفحة.</p>
+                        <p>للمساعدة أو الأسئلة، اكتب "!help" في الدردشة.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

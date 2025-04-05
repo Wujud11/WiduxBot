@@ -1,0 +1,148 @@
+{% extends 'layout.html' %}
+
+{% block title %}الصفحة الرئيسية{% endblock %}
+
+{% block content %}
+<div class="text-center mb-5">
+    <h1 class="display-4 mb-3 arabic-heading">مرحباً بك في بوت وج؟</h1>
+    <p class="lead">بوت تفاعلي للعب لعبة الأسئلة والأجوبة العربية على منصة تويتش</p>
+    <a href="{{ url_for('configure') }}" class="btn btn-primary btn-lg mt-3">
+        <i class="fas fa-plus-circle me-2"></i> أضف البوت إلى قناتك
+    </a>
+</div>
+
+<div class="row mb-5">
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 bg-dark text-light game-mode-card">
+            <div class="card-body text-center">
+                <h3 class="card-title"><i class="fas fa-user me-2"></i> اتحداك</h3>
+                <p class="card-text">وضع تحدي فردي بينك وبين البوت. أجب على الأسئلة واحصل على أكبر عدد من النقاط!</p>
+                <p class="mt-2"><span class="badge bg-info">وضع فردي</span></p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 bg-dark text-light game-mode-card">
+            <div class="card-body text-center">
+                <h3 class="card-title"><i class="fas fa-users me-2"></i> تحدي</h3>
+                <p class="card-text">وضع جماعي حيث يتنافس جميع المشاهدين على الإجابة عن الأسئلة وتصدر القائمة!</p>
+                <p class="mt-2"><span class="badge bg-warning">وضع جماعي</span></p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 bg-dark text-light game-mode-card">
+            <div class="card-body text-center">
+                <h3 class="card-title"><i class="fas fa-people-group me-2"></i> تيم</h3>
+                <p class="card-text">وضع فريقين يتنافسان ضد بعضهما البعض. الفريق الأحمر ضد الفريق الأزرق!</p>
+                <p class="mt-2">
+                    <span class="badge bg-danger">الفريق الأحمر</span>
+                    <span class="badge bg-primary">الفريق الأزرق</span>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card bg-dark text-light game-instructions rtl-text">
+            <div class="card-body">
+                <h2 class="card-title mb-4 arabic-heading">كيفية اللعب</h2>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4><i class="fas fa-gamepad me-2"></i> أنماط اللعب</h4>
+                        <ul class="list-group list-group-flush bg-transparent">
+                            <li class="list-group-item bg-transparent text-light border-secondary">
+                                <strong>اتحداك (فردي):</strong> لعب فردي ضد البوت.
+                            </li>
+                            <li class="list-group-item bg-transparent text-light border-secondary">
+                                <strong>تحدي (جماعي):</strong> لعب جماعي حيث يتسجل كل لاعب بمفرده.
+                            </li>
+                            <li class="list-group-item bg-transparent text-light border-secondary">
+                                <strong>تيم (فرق):</strong> فريقين يتنافسون، فريق أحمر وفريق أزرق.
+                            </li>
+                        </ul>
+                        
+                        <h4 class="mt-4"><i class="fas fa-star me-2"></i> أنواع الأسئلة الخاصة</h4>
+                        <ul class="list-group list-group-flush bg-transparent">
+                            <li class="list-group-item bg-transparent text-light border-secondary">
+                                <strong class="text-warning">سؤال الذهب:</strong> الإجابة الصحيحة تمنحك 50 نقطة!
+                            </li>
+                            <li class="list-group-item bg-transparent text-light border-secondary">
+                                <strong class="text-danger">سؤال الزرف:</strong> أجب واخصم نقاط من الفريق الآخر أو ضاعف نقاطك!
+                            </li>
+                            <li class="list-group-item bg-transparent text-light border-secondary">
+                                <strong class="text-secondary">سؤال الدووم:</strong> الإجابة الصحيحة تضاعف النقاط والخاطئة تخسرك كل نقاطك!
+                            </li>
+                            <li class="list-group-item bg-transparent text-light border-secondary">
+                                <strong class="text-primary">اختبار المصير:</strong> 5 أسئلة متتالية، كل إجابة صحيحة: +10 نقاط، والخاطئة: -5 نقاط.
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h4><i class="fas fa-clipboard-list me-2"></i> نظام التسجيل</h4>
+                        <ul class="list-group list-group-flush bg-transparent">
+                            <li class="list-group-item bg-transparent text-light border-secondary">
+                                <strong>اتحداك:</strong> اكتب "R" للتسجيل والبدء فوراً.
+                            </li>
+                            <li class="list-group-item bg-transparent text-light border-secondary">
+                                <strong>تحدي:</strong> اكتب "R" للتسجيل خلال 20 ثانية.
+                            </li>
+                            <li class="list-group-item bg-transparent text-light border-secondary">
+                                <strong>تيم:</strong> اكتب "أحمر" أو "أزرق" للانضمام للفريق خلال 30 ثانية.
+                            </li>
+                        </ul>
+                        
+                        <h4 class="mt-4"><i class="fas fa-trophy me-2"></i> نظام النقاط</h4>
+                        <ul class="list-group list-group-flush bg-transparent">
+                            <li class="list-group-item bg-transparent text-light border-secondary">
+                                <strong>إجابة صحيحة خلال 5 ثوانٍ:</strong> 10 نقاط.
+                            </li>
+                            <li class="list-group-item bg-transparent text-light border-secondary">
+                                <strong>إجابة صحيحة بين 5-10 ثوانٍ:</strong> 5 نقاط.
+                            </li>
+                            <li class="list-group-item bg-transparent text-light border-secondary">
+                                <strong>بونص سلسلة:</strong> 3 إجابات صحيحة متتالية تمنحك 10 نقاط إضافية.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card bg-dark text-light">
+            <div class="card-body text-center">
+                <h2 class="card-title mb-4 arabic-heading">إحصائيات البوت</h2>
+                <div class="row text-center">
+                    <div class="col-md-4 mb-3">
+                        <div class="border border-secondary rounded p-3">
+                            <i class="fas fa-tv fa-3x mb-3 text-info"></i>
+                            <h3><span class="counter" data-target="10">0</span>+</h3>
+                            <p class="text-muted">قنوات نشطة</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="border border-secondary rounded p-3">
+                            <i class="fas fa-question-circle fa-3x mb-3 text-warning"></i>
+                            <h3><span class="counter" data-target="30">0</span>+</h3>
+                            <p class="text-muted">أسئلة متنوعة</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="border border-secondary rounded p-3">
+                            <i class="fas fa-gamepad fa-3x mb-3 text-success"></i>
+                            <h3><span class="counter" data-target="100">0</span>+</h3>
+                            <p class="text-muted">جولات تم لعبها</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
