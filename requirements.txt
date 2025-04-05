@@ -7,3 +7,4 @@ psycopg2-binary>=2.9.10
 sqlalchemy>=2.0.40
 trafilatura>=2.0.0
 twitchio>=2.10.0
+uvicorn>=0.29.0
