@@ -192,8 +192,7 @@ with app.app_context():
                     text=response,
                     min_score=0,
                     max_score=50,
-                    is_team_response=False,
-                    is_leader_response=True
+                    is_team_response=False
                 )
                 db.session.add(funny_resp)
 
