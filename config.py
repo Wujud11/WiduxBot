@@ -1,4 +1,6 @@
+
 import os
+from models import Question, db
 
 # Twitch configuration
 TWITCH_TOKEN = 'a7raf1pqlq3oey1qo903mzy08d9qq3'
@@ -96,3 +98,9 @@ WINNER_MESSAGES = [
     "عبقري!",
     "أداء مذهل!"
 ]
+
+def get_questions():
+    """Get all active questions from the database"""
+    from models import Question
+    questions = Question.query.filter_by(active=True).all()
+    return [q.to_dict() for q in questions]

@@ -1,17 +1,25 @@
 import random
 import asyncio
-from config import QUESTIONS, QUESTION_TIMEOUT
+from models import Question, db
+from config import QUESTION_TIMEOUT
+
+def get_all_questions():
+    """Get all active questions from database"""
+    questions = Question.query.filter_by(active=True).all()
+    return [q.to_dict() for q in questions]
 
 class QuestionHandler:
     def __init__(self):
-        self.questions = QUESTIONS.copy()
+        from config import get_questions
+        self.questions = get_questions()
         random.shuffle(self.questions)
         self.current_question_index = 0
         self.questions_asked = []
 
     def reset(self):
         """Reset the question handler for a new game"""
-        self.questions = QUESTIONS.copy()
+        from config import get_questions
+        self.questions = get_questions()
         random.shuffle(self.questions)
         self.current_question_index = 0
         self.questions_asked = []

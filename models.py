@@ -108,11 +108,15 @@ class Question(db.Model):
     
     def to_dict(self):
         """Convert question to dictionary format"""
+        answers = [self.correct_answer]
+        if self.alternative_answers:
+            answers.extend([ans.strip() for ans in self.alternative_answers.split(',')])
+            
         return {
             'id': self.id,
             'question': self.question,
-            'correct_answer': self.correct_answer,
-            'alternative_answers': self.alternative_answers,
+            'answer': self.correct_answer,
+            'choices': answers,
             'category': self.category,
             'difficulty': self.difficulty,
             'active': self.active
