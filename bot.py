@@ -53,7 +53,9 @@ class WiduxBot(commands.Bot):
         
         # Initialize game managers for connected channels
         for channel in self.connected_channels:
+            logger.info(f"Connecting to channel: {channel.name}")
             self.game_managers[channel.name] = GameManager(self, channel.name)
+            await channel.send(f"البوت متصل وجاهز للعب! اكتب 'وج؟' لبدء لعبة جديدة.")
             logger.info(f"Initialized game manager for channel: {channel.name}")
 
     async def event_message(self, message):
@@ -69,8 +71,8 @@ class WiduxBot(commands.Bot):
         # Log message for debugging
         logger.info(f"Received message in channel {channel_name}: {content}")
 
-        # Check for game trigger phrase
-        if content == 'وج؟':
+        # Check for game trigger phrase (more flexible matching)
+        if content.strip().replace(' ', '') in ['وج؟', 'وج?', 'وج']:
             logger.info(f"Game trigger detected from {message.author.name} in channel {channel_name}")
             with app.app_context():
                 await self.handle_game_start(message)

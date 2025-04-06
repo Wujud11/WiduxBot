@@ -178,7 +178,9 @@ class GameManager:
 
         # Create a new game session in the database
         try:
-            with app.app_context():
+            from flask import current_app
+            if not current_app:
+                app.app_context().push()
                 db_channel = Channel.query.filter_by(name=self.channel_name).first()
                 if not db_channel:
                     # Create channel if it doesn't exist
