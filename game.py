@@ -178,9 +178,7 @@ class GameManager:
 
         # Create a new game session in the database
         try:
-            from flask import current_app
-            if not current_app:
-                app.app_context().push()
+            with app.app_context():
                 db_channel = Channel.query.filter_by(name=self.channel_name).first()
                 if not db_channel:
                     # Create channel if it doesn't exist
@@ -188,7 +186,7 @@ class GameManager:
                     db_channel = Channel(name=self.channel_name, is_active=True)
                     db.session.add(db_channel)
                     db.session.commit()
-                
+
                 # Create new game session
                 self.active_game = GameSession(channel_id=db_channel.id, mode=mode, is_active=True)
                 db.session.add(self.active_game)
@@ -199,21 +197,6 @@ class GameManager:
             await channel.send("حدث خطأ أثناء بدء اللعبة. الرجاء المحاولة مرة أخرى.")
             return
 
-        # Create new game session
-        self.active_game = GameSession(channel_id=db_channel.id, mode=mode, is_active=True)
-        db.session.add(self.active_game)
-        db.session.commit()
-        logger.info(f"Created new game session in database. ID: {self.active_game.id}, Mode: {mode}")
-
-        # Reset game state
-        self.players = {}
-        self.registered_players = set()
-        self.red_team = set()
-        self.blue_team = set()
-        self.red_leader = None
-        self.blue_leader = None
-        self.question_queue = []
-        self.consecutive_answers = defaultdict(int)
 
         # Handle different game modes
         if mode == 'فردي':
@@ -713,7 +696,7 @@ class GameManager:
             # Doom question for team mode
             await channel.send("🔥 **DOOM Question!** 🔥")
             await channel.send(f"قادة الفرق! هذا سؤال خطير لكم القرار تجاوبوا أو تنسحبوا. إذا أجبتم إجابة صحيحة، تتضاعف النقاط! لكن إذا كانت الإجابة خاطئة أو انتهىالوقت، يخسر الفريق جميع نقاطه.")
-            await channel.send(f"القادة فقط، اكتبوا '1' للقبول أو '2' للرفض خلال 10 ثوان.")
+            await channel.send(f"القادة فقط، اكتبوا ''1' للقبول أو '2' للرفض خلال 10 ثوان.")
 
             self.waiting_for_doom_decision = True
             self.red_team_accepted_doom = False

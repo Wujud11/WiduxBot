@@ -53,10 +53,13 @@ class WiduxBot(commands.Bot):
         
         # Initialize game managers for connected channels
         for channel in self.connected_channels:
-            logger.info(f"Connecting to channel: {channel.name}")
-            self.game_managers[channel.name] = GameManager(self, channel.name)
-            await channel.send(f"البوت متصل وجاهز للعب! اكتب 'وج؟' لبدء لعبة جديدة.")
-            logger.info(f"Initialized game manager for channel: {channel.name}")
+            try:
+                logger.info(f"Connecting to channel: {channel.name}")
+                self.game_managers[channel.name] = GameManager(self, channel.name)
+                await channel.send(f"البوت متصل وجاهز للعب! اكتب 'وج؟' لبدء لعبة جديدة.")
+                logger.info(f"Initialized game manager for channel: {channel.name}")
+            except Exception as e:
+                logger.error(f"Error initializing channel {channel.name}: {str(e)}")
 
     async def event_message(self, message):
         """Run every time a message is sent in chat."""
