@@ -16,6 +16,8 @@ app.secret_key = os.environ.get("SESSION_SECRET", "widuxbot-secret-key")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # Configure database
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable is not set. Please configure it in Secrets.")
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
