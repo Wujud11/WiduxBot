@@ -106,9 +106,25 @@ class WiduxBot(commands.Bot):
                 self.game_managers[channel_name] = GameManager(self, channel_name)
             
             game_manager = self.game_managers[channel_name]
-        
-        # Check if a game is already running
-        if game_manager.is_game_active():
+            
+            # Check if a game is already running
+            if game_manager.is_game_active():
+                logger.warning(f"Game is already active in channel {channel_name}")
+                await message.channel.send("هناك لعبة قائمة بالفعل! انتظر حتى تنتهي أو اكتب '!resetgame' إذا كنت مشرفًا لإعادة تعيين اللعبة.")
+                return
+                
+            # Set waiting for mode flag
+            game_manager.set_waiting_for_mode(True)
+            logger.info(f"Set waiting_for_mode to True for channel {channel_name}")
+            
+            # Send welcome message
+            welcome_msg = "هلا والله! إذا بتلعب لحالك اكتب 'فردي' إذا ضد فريق اكتب 'تحدي' وإذا فريقين اكتب 'تيم'."
+            await message.channel.send(welcome_msg)
+            logger.info(f"Sent welcome message in channel {channel_name}: {welcome_msg}")
+            
+        except Exception as e:
+            logger.error(f"Error in handle_game_start: {str(e)}")
+            await message.channel.send("حدث خطأ أثناء بدء اللعبة. الرجاء المحاولة مرة أخرى.")
             logger.warning(f"Game is already active in channel {channel_name}")
             await message.channel.send("هناك لعبة قائمة بالفعل! انتظر حتى تنتهي أو اكتب '!resetgame' إذا كنت مشرفًا لإعادة تعيين اللعبة.")
             return
