@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 # Create Flask app
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "widuxbot-secret-key")
-app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
 
 # Configure database
 if not DATABASE_URL:
