@@ -49,10 +49,11 @@ class WiduxBot(commands.Bot):
 
     async def event_ready(self):
         """Called once when the bot goes online."""
-        logger.info(f"{TWITCH_BOT_USERNAME} is online! Connected to: {', '.join(self.initial_channels)}")
-
+        logger.info(f"{TWITCH_BOT_USERNAME} is online!")
+        
         # Initialize game managers for each channel
-        for channel_name in self.initial_channels:
+        channels = [chan.name for chan in self._connection._initial_channels]
+        for channel_name in channels:
             self.game_managers[channel_name] = GameManager(self, channel_name)
 
     async def event_message(self, message):
@@ -71,8 +72,9 @@ class WiduxBot(commands.Bot):
         # Check for game trigger phrase
         if content == 'وج؟':
             logger.info(f"Game trigger detected from {message.author.name} in channel {channel_name}")
-            await self.handle_game_start(message)
-            return  # Return here to avoid processing the same message elsewhere
+            with app.app_context():
+                await self.handle_game_start(message)
+            return
 
         # Check for game mode selection if a game manager exists
         if channel_name in self.game_managers and self.game_managers[channel_name].waiting_for_mode:
@@ -91,7 +93,8 @@ class WiduxBot(commands.Bot):
             # Pass message to the appropriate game manager if exists
             if channel_name in self.game_managers:
                 logger.info(f"Passing message to game manager in channel {channel_name}")
-                await self.game_managers[channel_name].process_message(message)
+                with app.app_context():
+                    await self.game_managers[channel_name].process_message(message)
         except Exception as e:
             logger.error(f"Error processing message in channel {channel_name}: {str(e)}")
             await message.channel.send("حدث خطأ في معالجة الرسالة. الرجاء المحاولة مرة أخرى.")
