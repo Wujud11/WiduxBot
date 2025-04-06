@@ -3,6 +3,10 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8">
+        <div class="alert-container mb-3">
+            <!-- Container for dynamically added alerts via JavaScript -->
+        </div>
+        
         <div class="card shadow mb-4">
             <div class="card-header bg-primary text-white">
                 <h2 class="card-title text-center mb-0">
@@ -12,6 +16,17 @@
             <div class="card-body">
                 <div class="text-center mb-4">
                     <p class="lead">بوت تويتش فعال لإدارة لعبة "وج؟" في قناتك</p>
+                </div>
+                
+                <div class="alert alert-info mb-4">
+                    <h4 class="alert-heading"><i class="fas fa-info-circle me-2"></i>ملاحظة مهمة</h4>
+                    <p>لتشغيل البوت، تحتاج إلى توفير بيانات اعتماد Twitch التالية كمتغيرات بيئية:</p>
+                    <ul>
+                        <li><strong>TWITCH_TMI_TOKEN</strong>: رمز الوصول للبوت (يبدأ بـ oauth:)</li>
+                        <li><strong>TWITCH_CLIENT_ID</strong>: معرف التطبيق المسجل في Twitch</li>
+                        <li><strong>TWITCH_BOT_USERNAME</strong>: اسم مستخدم البوت على Twitch</li>
+                    </ul>
+                    <p class="mb-0">بدون هذه المعلومات، لن يتمكن البوت من الاتصال بـ Twitch.</p>
                 </div>
                 
                 <h3 class="mb-3">تسجيل قناة جديدة</h3>
@@ -38,24 +53,27 @@
                             </thead>
                             <tbody>
                                 {% for channel in channels %}
-                                <tr>
+                                <tr id="channel-{{ channel.id }}">
                                     <td>{{ channel.name }}</td>
                                     <td>
                                         {% if channel.is_active %}
-                                            <span class="badge bg-success">نشط</span>
+                                            <span class="badge bg-success channel-status">نشط</span>
                                         {% else %}
-                                            <span class="badge bg-danger">متوقف</span>
+                                            <span class="badge bg-secondary channel-status">متوقف</span>
                                         {% endif %}
                                     </td>
                                     <td>{{ channel.created_at.strftime('%Y-%m-%d') }}</td>
                                     <td>
                                         <form action="{{ url_for('toggle_channel', channel_id=channel.id) }}" method="post" class="d-inline">
-                                            <button type="submit" class="btn btn-sm {% if channel.is_active %}btn-warning{% else %}btn-success{% endif %}">
+                                            <button type="submit" class="btn btn-sm toggle-channel-btn {% if channel.is_active %}btn-danger{% else %}btn-success{% endif %}" data-channel-id="{{ channel.id }}">
+                                                <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                                                <span class="btn-text">
                                                 {% if channel.is_active %}
                                                     <i class="fas fa-pause me-1"></i> إيقاف
                                                 {% else %}
                                                     <i class="fas fa-play me-1"></i> تشغيل
                                                 {% endif %}
+                                                </span>
                                             </button>
                                         </form>
                                         <form action="{{ url_for('delete_channel', channel_id=channel.id) }}" method="post" class="d-inline">
@@ -85,7 +103,7 @@
                 <h4 class="mt-3">طريقة اللعب:</h4>
                 <ol class="list-group list-group-numbered mb-4">
                     <li class="list-group-item">اكتب "وج؟" في الدردشة لبدء اللعبة</li>
-                    <li class="list-group-item">اختر نمط اللعب: "اتحداك" (فردي)، "تحدي" (جماعي)، أو "تيم" (فرق)</li>
+                    <li class="list-group-item">اختر نمط اللعب: "فردي"، "تحدي" (جماعي)، أو "تيم" (فرق)</li>
                     <li class="list-group-item">اتبع تعليمات البوت للتسجيل واختيار قادة الفرق</li>
                     <li class="list-group-item">أجب عن الأسئلة بسرعة للحصول على أكبر عدد من النقاط</li>
                 </ol>
@@ -95,7 +113,7 @@
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="headingOne">
                             <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
-                                اتحداك (فردي)
+                                فردي
                             </button>
                         </h2>
                         <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#gameModesAccordion">
