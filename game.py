@@ -84,7 +84,10 @@ class GameManager:
         content = message.content.strip()
         
         logger.info(f"GameManager processing message from {username}: '{content}'")
-        logger.info(f"Current state - waiting_for_mode: {self.waiting_for_mode}, active_game: {self.active_game}")
+        logger.info(f"Current game state - waiting_for_mode: {self.waiting_for_mode}, active_game: {self.active_game}")
+        logger.info(f"Current question: {self.current_question.text if self.current_question else 'None'}")
+        logger.info(f"Players in game: {list(self.players.keys()) if self.players else 'None'}")
+        logger.info(f"Registered players: {list(self.registered_players) if self.registered_players else 'None'}")
         
         # Skip messages from eliminated players
         if username in self.eliminated_players:
@@ -169,17 +172,22 @@ class GameManager:
         
     async def start_game(self, channel, mode, initiator):
         """Start a new game with the specified mode"""
+        logger.info(f"Starting new game with mode: {mode}, initiator: {initiator}")
+        
         # Create a new game session in the database
         db_channel = Channel.query.filter_by(name=self.channel_name).first()
         if not db_channel:
             # Create channel if it doesn't exist
+            logger.info(f"Creating new channel in database: {self.channel_name}")
             db_channel = Channel(name=self.channel_name, is_active=True)
             db.session.add(db_channel)
             db.session.commit()
         
+        # Create new game session
         self.active_game = GameSession(channel_id=db_channel.id, mode=mode, is_active=True)
         db.session.add(self.active_game)
         db.session.commit()
+        logger.info(f"Created new game session in database. ID: {self.active_game.id}, Mode: {mode}")
         
         # Reset game state
         self.players = {}
@@ -442,45 +450,114 @@ class GameManager:
             await message.channel.send(f"@{username} يرجى إدخال رقم صحيح فقط.")
             
     async def load_and_organize_questions(self, channel):
-        """Load and organize questions in a specific sequence"""
+        """Load and organize questions in a specific sequence according to the specified order"""
         self.question_queue = []
         
         # Load questions from database
         await self.load_questions()
         
-        # Organize questions by type
+        # Log the question loading process
+        logger.info(f"Organizing questions for game mode: {self.active_game.mode if self.active_game else 'unknown'}")
+        logger.info(f"Total questions loaded: {len(self.all_questions)}")
+        
+        # Organize questions in specific sequence
+        # 1. Normal questions
+        # 2. Golden question
+        # 3. Test of Fate (5 questions)
+        # 4. Steal question
+        # 5. Sabotage question
+        # 6. Doom question
         normal_questions = [q for q in self.all_questions if q.question_type == 'normal']
+        max_questions = MAX_QUESTIONS_TEAM if self.active_game.mode == 'تيم' else MAX_QUESTIONS_SOLO
         golden_questions = [q for q in self.all_questions if q.question_type == 'golden']
-        fate_questions = [q for q in self.all_questions if q.question_type == 'fate']
+        fate_questions = [q for q in self.all_questions if q.question_type == 'normal']  # Use normal questions for fate test
         steal_questions = [q for q in self.all_questions if q.question_type == 'steal']
-        sabotage_questions = [q for q in self.all_questions if q.question_type == 'sabotage']
+        sabotage_questions = [q for q in self.all_questions if q.question_type == 'normal']  # Use normal questions for sabotage
         doom_questions = [q for q in self.all_questions if q.question_type == 'doom']
         
-        # Select questions in the required order
-        # First - normal questions
-        selected_normal = random.sample(normal_questions, min(self.normal_question_count, len(normal_questions)))
-        self.question_queue.extend(selected_normal)
+        # Log available questions by type
+        logger.info(f"Normal questions: {len(normal_questions)}")
+        logger.info(f"Golden questions: {len(golden_questions)}")
+        logger.info(f"Steal questions: {len(steal_questions)}")
+        logger.info(f"Doom questions: {len(doom_questions)}")
         
-        # Then - golden questions (if available)
+        # 1. First - normal questions (always include)
+        max_questions = 15 if self.active_game and self.active_game.mode == 'تيم' else 20
+        
+        # Make sure we don't run out of normal questions
+        if len(normal_questions) < self.normal_question_count:
+            self.normal_question_count = max(5, len(normal_questions))
+            logger.warning(f"Not enough normal questions, reducing count to {self.normal_question_count}")
+            await channel.send(f"تم تعديل عدد الأسئلة العادية إلى {self.normal_question_count} بسبب محدودية الأسئلة المتوفرة.")
+        
+        # Select random normal questions
+        selected_normal = random.sample(normal_questions, self.normal_question_count)
+        self.question_queue.extend(selected_normal)
+        logger.info(f"Added {len(selected_normal)} normal questions to queue")
+        
+        # 2. Golden question (always include)
         if golden_questions:
-            self.question_queue.append(random.choice(golden_questions))
-            
-        # Then - fate questions (if available and in team or challenge mode)
-        if fate_questions and self.active_game and self.active_game.mode in ['تيم', 'تحدي']:
-            self.question_queue.append(random.choice(fate_questions))
-            
-        # Then - steal questions (if available)
+            golden_q = random.choice(golden_questions)
+            self.question_queue.append(golden_q)
+            logger.info(f"Added golden question: {golden_q.text}")
+        else:
+            # If no golden questions, use a normal question
+            if normal_questions:
+                fallback_golden = random.choice(normal_questions)
+                self.question_queue.append(fallback_golden)
+                logger.info(f"No golden questions available, using normal question instead: {fallback_golden.text}")
+            else:
+                logger.error("No questions available for golden question!")
+                
+        # 3. Test of Fate (5 questions) - only for تيم and تحدي modes
+        if self.active_game and self.active_game.mode in ['تيم', 'تحدي']:
+            # Use 5 random normal questions for Fate Test
+            fate_count = min(5, len(fate_questions))
+            if fate_count > 0:
+                self.fate_test_questions_remaining = fate_count
+                selected_fate = random.sample(fate_questions, fate_count)
+                for q in selected_fate:
+                    q.question_type = "fate"  # Mark as fate question
+                self.question_queue.extend(selected_fate)
+                logger.info(f"Added {fate_count} fate test questions")
+        
+        # 4. Steal question (always include)
         if steal_questions:
-            self.question_queue.append(random.choice(steal_questions))
-            
-        # Then - sabotage questions (if available and in team or challenge mode)
-        if sabotage_questions and self.active_game and self.active_game.mode in ['تيم', 'تحدي']:
-            self.question_queue.append(random.choice(sabotage_questions))
-            
-        # Finally - doom questions (if available and in team mode)
-        if doom_questions and self.active_game and self.active_game.mode == 'تيم':
-            self.question_queue.append(random.choice(doom_questions))
-            
+            steal_q = random.choice(steal_questions)
+            self.question_queue.append(steal_q)
+            logger.info(f"Added steal question: {steal_q.text}")
+        else:
+            # If no steal questions, use a normal question
+            if normal_questions:
+                fallback_steal = random.choice(normal_questions)
+                fallback_steal.question_type = "steal"  # Mark as steal question
+                self.question_queue.append(fallback_steal)
+                logger.info(f"No steal questions available, using normal question instead: {fallback_steal.text}")
+        
+        # 5. Sabotage question - only for تيم and تحدي modes
+        if self.active_game and self.active_game.mode in ['تيم', 'تحدي']:
+            if sabotage_questions:
+                sabotage_q = random.choice(sabotage_questions)
+                sabotage_q.question_type = "sabotage"  # Mark as sabotage question
+                self.question_queue.append(sabotage_q)
+                logger.info(f"Added sabotage question: {sabotage_q.text}")
+        
+        # 6. Doom question - only for تيم mode
+        if self.active_game and self.active_game.mode == 'تيم':
+            if doom_questions:
+                doom_q = random.choice(doom_questions)
+                self.question_queue.append(doom_q)
+                logger.info(f"Added doom question: {doom_q.text}")
+            else:
+                # If no doom questions, use a normal question
+                if normal_questions:
+                    fallback_doom = random.choice(normal_questions)
+                    fallback_doom.question_type = "doom"  # Mark as doom question
+                    self.question_queue.append(fallback_doom)
+                    logger.info(f"No doom questions available, using normal question instead: {fallback_doom.text}")
+        
+        logger.info(f"Total questions in queue: {len(self.question_queue)}")
+        
         # Start asking questions
         await self.ask_next_question(channel)
     
@@ -573,20 +650,27 @@ class GameManager:
         
         # Get the next question
         self.current_question = self.question_queue.pop(0)
+        logger.info(f"Asking next question: {self.current_question.text}, type: {self.current_question.question_type}")
         
-        # Determine if this is a special question
-        self.is_golden_question = random.random() < 0.2  # 20% chance
-        self.is_doom_question = self.active_game.mode == 'تيم' and random.random() < 0.1  # 10% chance in team mode
-        self.is_steal_question = random.random() < 0.15  # 15% chance
-        # Test of Fate only in تيم and تحدي modes
-        self.is_fate_test = self.active_game.mode != 'فردي' and random.random() < 0.1  # 10% chance in team and challenge modes
-        # Sabotage question only in تيم and تحدي modes
-        self.is_sabotage_question = self.active_game.mode != 'فردي' and random.random() < 0.1  # 10% chance
+        # Determine question type based on the question object
+        self.is_golden_question = self.current_question.question_type == 'golden'
+        self.is_doom_question = self.current_question.question_type == 'doom'
+        self.is_steal_question = self.current_question.question_type == 'steal'
+        self.is_fate_test = self.current_question.question_type == 'fate'
+        self.is_sabotage_question = self.current_question.question_type == 'sabotage'
+        
+        # Safety check for active_game
+        if not self.active_game:
+            logger.error("active_game is None in ask_next_question, this shouldn't happen")
+            return
+        
+        logger.info(f"Question types - Golden: {self.is_golden_question}, Doom: {self.is_doom_question}, " +
+                   f"Steal: {self.is_steal_question}, Fate: {self.is_fate_test}, Sabotage: {self.is_sabotage_question}")
         
         # Handle special question types
         if self.is_sabotage_question:
             # Sabotage question
-            await channel.send("🔪 **Sabotage Question!** 🔪")
+            await channel.send("🔪 **SABOTAGE QUESTION!** 🔪")
             
             if self.active_game.mode == 'تيم':
                 await channel.send("اختر شخصًا من الفريق الآخر ترغب في استبعاده من اللعبة، قم بعمل منشن له.")
@@ -611,7 +695,7 @@ class GameManager:
             
         elif self.is_doom_question:
             # Doom question for team mode
-            await channel.send("🔥 **Doom Question!** 🔥")
+            await channel.send("🔥 **DOOM Question!** 🔥")
             await channel.send(f"قادة الفرق! هذا سؤال خطير لكم القرار تجاوبوا أو تنسحبوا. إذا أجبتم إجابة صحيحة، تتضاعف النقاط! لكن إذا كانت الإجابة خاطئة أو انتهى الوقت، يخسر الفريق جميع نقاطه.")
             await channel.send(f"القادة فقط، اكتبوا '1' للقبول أو '2' للرفض خلال 10 ثوان.")
             
@@ -655,9 +739,9 @@ class GameManager:
             await channel.send("⚡ **Test of Fate!** ⚡")
             await channel.send("ستواجهون 5 أسئلة متتابعة! 10 نقاط لكل إجابة صحيحة، وخصم 5 نقاط لكل إجابة خاطئة. وعند انتهاء الوقت بدون إجابة، لا يوجد خصم!")
             
-            # Get 5 questions for the fate test
-            fate_questions = Question.query.order_by(db.func.random()).limit(5).all()
-            self.question_queue = fate_questions + self.question_queue
+            # The fate questions are already in the queue with the right type marking
+            # Just set the counter for tracking fate test progress
+            logger.info("Starting Fate Test question sequence")
             self.fate_test_questions_remaining = 5
             # Store the initial scores at the start of test of fate
             if self.active_game.mode == 'تيم':
@@ -741,6 +825,11 @@ class GameManager:
     
     async def handle_question_answer(self, message):
         """Handle player answers to questions"""
+        # Safety check - need an active game and current question
+        if not self.active_game or not self.current_question:
+            logger.warning("Attempted to handle answer with no active game or current question")
+            return
+            
         username = message.author.name
         content = message.content.strip()
         
@@ -780,7 +869,7 @@ class GameManager:
                     f"@{target_player} عسسل على قلبي! 🍯",
                     f"@{target_player} شلوووتي! 👟",
                     f"@{target_player} لاتكثر كلام! 🤐",
-                    f"@{target_player} تفنش واااء! 💨",
+                    f"@{target_player} تفنش واااء! ",
                     f"@{target_player} انتهى وقتك! ⏱️",
                     f"@{target_player} الله يعين! 🙏",
                     f"@{target_player} مع السلامة! 👋",
@@ -788,7 +877,7 @@ class GameManager:
                     f"@{target_player} فشلنا في إنقاذك! 🚑",
                     f"@{target_player} هههههههه! 😂",
                     f"@{target_player} اقضب الباب! 🚪",
-                    f"@{target_player} كاااك! 🐔",
+                    f"@{target_player} كاااك ",
                     f"@{target_player} يفهههم اللي طلعك! 👌"
                 ]
                 await message.channel.send(random.choice(elimination_messages))
@@ -977,6 +1066,12 @@ class GameManager:
                     db.session.commit()
                     
                     await message.channel.send(f"🔥 إجابة خاطئة من @{username} على سؤال الدووم! الفريق {team} يخسر جميع نقاطه! 🔥")
+                    
+                    # End game and declare other team as winner
+                    winning_team = "أزرق" if team == "أحمر" else "أحمر"
+                    await message.channel.send(f"🎉 انتهت اللعبة! الفريق {winning_team} هو الفائز! 🎉")
+                    await self.end_game()
+                    return
                 
                 # Mark question as answered
                 self.current_question = None
@@ -1143,7 +1238,7 @@ class GameManager:
         await channel.send("🎮 انتهت اللعبة! 🎮")
         await channel.send("🏆 إعلان النتائج النهائية 🏆")
         
-        if game_mode == 'اتحداك':
+        if game_mode == 'فردي':
             # Challenge mode - display player score
             player = next(iter(self.players.values()))
             await channel.send(f"النتيجة النهائية: @{player.username} حصل على {player.score} نقطة")
@@ -1247,7 +1342,7 @@ class GameManager:
                 await channel.send("🎉 تعادل! كلا الفريقين فائز! 🎉")
         
         # Additional motivational messages to winners
-        if game_mode == 'اتحداك' and player.score >= 50:
+        if game_mode == 'فردي' and player.score >= 50:
             motivational_messages = [
                 "أنت بطل حقيقي! استمر في التألق! ✨",
                 "إنجاز رائع! استمتع بالنصر! 🎖️",

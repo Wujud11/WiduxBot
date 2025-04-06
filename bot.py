@@ -93,20 +93,29 @@ class WiduxBot(commands.Bot):
     async def handle_game_start(self, message):
         """Handle game start trigger"""
         channel_name = message.channel.name
+        logger.info(f"Game start trigger received from {message.author.name} in channel {channel_name}")
         
         # Create or get the game manager for this channel
         if channel_name not in self.game_managers:
+            logger.info(f"Creating new GameManager for channel {channel_name}")
             self.game_managers[channel_name] = GameManager(self, channel_name)
         
         game_manager = self.game_managers[channel_name]
         
         # Check if a game is already running
         if game_manager.is_game_active():
-            await message.channel.send("هناك لعبة قائمة بالفعل! انتظر حتى تنتهي.")
+            logger.warning(f"Game is already active in channel {channel_name}")
+            await message.channel.send("هناك لعبة قائمة بالفعل! انتظر حتى تنتهي أو اكتب '!resetgame' إذا كنت مشرفًا لإعادة تعيين اللعبة.")
             return
         
+        # Set waiting for mode flag
+        game_manager.set_waiting_for_mode(True)
+        logger.info(f"Set waiting_for_mode to True for channel {channel_name}")
+        
         # Send welcome message
-        await message.channel.send("هلا والله! إذا بتلعب لحالك اكتب 'فردي' إذا ضد مجموعة اكتب 'تحدي' وإذا فريقين اكتب 'تيم'.")
+        welcome_msg = "هلا والله! إذا بتلعب لحالك اكتب 'فردي' إذا ضد فريق اكتب 'تحدي' وإذا فريقين اكتب 'تيم'."
+        await message.channel.send(welcome_msg)
+        logger.info(f"Sent welcome message in channel {channel_name}: {welcome_msg}")
         
         # Wait for game mode selection
         game_manager.set_waiting_for_mode(True)
