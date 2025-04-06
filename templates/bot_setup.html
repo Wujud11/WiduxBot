@@ -61,7 +61,7 @@
                                 <label for="twitch_token" class="form-label">OAuth Token</label>
                                 <input type="text" class="form-control" id="twitch_token" name="twitch_token" 
                                        value="{{ current_settings.token }}" placeholder="ادخل توكن OAuth">
-                                <div class="form-text">توكن OAuth يبدأ بـ "oauth:". تأكد من تضمين هذا الجزء</div>
+                                <div class="form-text">توكن OAuth المستخدم في Render يجب أن يكون بدون البادئة "oauth:"</div>
                             </div>
                             
                             <div class="mb-3">
@@ -76,7 +76,7 @@
                                     <p><strong>ملاحظة هامة:</strong> لتفعيل هذه الإعدادات، يجب عليك تعيين المتغيرات البيئية التالية في لوحة تحكم Replit أو Render:</p>
                                     <ul>
                                         <li>TWITCH_CLIENT_ID</li>
-                                        <li>TWITCH_TOKEN</li>
+                                        <li>TWITCH_OAUTH_TOKEN</li>
                                         <li>TWITCH_CHANNEL (اختياري)</li>
                                     </ul>
                                 </div>
