@@ -82,25 +82,30 @@ class WiduxBot(commands.Bot):
                 await self.game_managers[channel_name].process_message(message)
                 return  # Return to avoid further processing
                 
-        # Process commands
-        await self.handle_commands(message)
-        
-        # Pass message to the appropriate game manager if exists
-        if channel_name in self.game_managers:
-            logger.info(f"Passing message to game manager in channel {channel_name}")
-            await self.game_managers[channel_name].process_message(message)
+        try:
+            # Process commands
+            await self.handle_commands(message)
+            
+            # Pass message to the appropriate game manager if exists
+            if channel_name in self.game_managers:
+                logger.info(f"Passing message to game manager in channel {channel_name}")
+                await self.game_managers[channel_name].process_message(message)
+        except Exception as e:
+            logger.error(f"Error processing message in channel {channel_name}: {str(e)}")
+            await message.channel.send("حدث خطأ في معالجة الرسالة. الرجاء المحاولة مرة أخرى.")
     
     async def handle_game_start(self, message):
         """Handle game start trigger"""
-        channel_name = message.channel.name
-        logger.info(f"Game start trigger received from {message.author.name} in channel {channel_name}")
-        
-        # Create or get the game manager for this channel
-        if channel_name not in self.game_managers:
-            logger.info(f"Creating new GameManager for channel {channel_name}")
-            self.game_managers[channel_name] = GameManager(self, channel_name)
-        
-        game_manager = self.game_managers[channel_name]
+        try:
+            channel_name = message.channel.name
+            logger.info(f"Game start trigger received from {message.author.name} in channel {channel_name}")
+            
+            # Create or get the game manager for this channel
+            if channel_name not in self.game_managers:
+                logger.info(f"Creating new GameManager for channel {channel_name}")
+                self.game_managers[channel_name] = GameManager(self, channel_name)
+            
+            game_manager = self.game_managers[channel_name]
         
         # Check if a game is already running
         if game_manager.is_game_active():
