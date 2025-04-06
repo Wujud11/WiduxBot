@@ -39,6 +39,14 @@ DEFAULT_MENTION_RESPONSES = [
     "مرحباً بك في بوت الألعاب! أكتب 'وج؟' لبدء اللعب."
 ]
 
+# رسائل مدح الفريق
+TEAM_PRAISE_MESSAGES = [
+    {"min_score": 100, "text": "فريق أسطوري! أداء خارق للعادة!"},
+    {"min_score": 75, "text": "فريق متميز! تعاون رائع!"},
+    {"min_score": 50, "text": "أداء جماعي ممتاز! استمروا!"},
+    {"min_score": 25, "text": "فريق واعد! حافظوا على الحماس!"}
+]
+
 # Game configuration
 DEFAULT_QUESTION_COUNT = 10
 MIN_QUESTIONS = 5
