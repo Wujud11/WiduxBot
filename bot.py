@@ -51,13 +51,10 @@ class WiduxBot(commands.Bot):
         """Called once when the bot goes online."""
         logger.info(f"{TWITCH_BOT_USERNAME} is online!")
         
-        # Get connected channels
-        channels = [channel.name for channel in self._ws_connection._connection.channels]
-        logger.info(f"Connected to channels: {channels}")
-        
-        # Initialize game managers for each channel
-        for channel_name in channels:
-            self.game_managers[channel_name] = GameManager(self, channel_name)
+        # Initialize game managers for connected channels
+        for channel in self.connected_channels:
+            self.game_managers[channel.name] = GameManager(self, channel.name)
+            logger.info(f"Initialized game manager for channel: {channel.name}")
 
     async def event_message(self, message):
         """Run every time a message is sent in chat."""

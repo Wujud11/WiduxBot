@@ -177,14 +177,25 @@ class GameManager:
         from app import app, db
 
         # Create a new game session in the database
-        with app.app_context():
-            db_channel = Channel.query.filter_by(name=self.channel_name).first()
-            if not db_channel:
-                # Create channel if it doesn't exist
-                logger.info(f"Creating new channel in database: {self.channel_name}")
-                db_channel = Channel(name=self.channel_name, is_active=True)
-                db.session.add(db_channel)
+        try:
+            with app.app_context():
+                db_channel = Channel.query.filter_by(name=self.channel_name).first()
+                if not db_channel:
+                    # Create channel if it doesn't exist
+                    logger.info(f"Creating new channel in database: {self.channel_name}")
+                    db_channel = Channel(name=self.channel_name, is_active=True)
+                    db.session.add(db_channel)
+                    db.session.commit()
+                
+                # Create new game session
+                self.active_game = GameSession(channel_id=db_channel.id, mode=mode, is_active=True)
+                db.session.add(self.active_game)
                 db.session.commit()
+                logger.info(f"Created new game session. ID: {self.active_game.id}, Mode: {mode}")
+        except Exception as e:
+            logger.error(f"Database error in start_game: {str(e)}")
+            await channel.send("حدث خطأ أثناء بدء اللعبة. الرجاء المحاولة مرة أخرى.")
+            return
 
         # Create new game session
         self.active_game = GameSession(channel_id=db_channel.id, mode=mode, is_active=True)
