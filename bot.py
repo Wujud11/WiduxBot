@@ -1,36 +1,30 @@
 import logging
 import asyncio
-import random
-from collections import defaultdict
 from twitchio.ext import commands
 from config import TWITCH_TMI_TOKEN, TWITCH_BOT_USERNAME, TWITCH_CLIENT_ID
 from models import Channel, Question, GameSession, Player
 from game import GameManager
 
-# Set up logging
 logger = logging.getLogger(__name__)
 
 class WiduxBot(commands.Bot):
     def __init__(self, channels):
-        # Verify token is in the correct format
         token = TWITCH_TMI_TOKEN
         if not token:
             raise ValueError("TWITCH_TMI_TOKEN is missing")
         if not token.startswith('oauth:'):
             token = f'oauth:{token}'
 
-        # Initialize bot
-        bot_username = TWITCH_BOT_USERNAME or "WiduxBot"
         super().__init__(
             token=token,
             prefix='!',
             initial_channels=channels,
-            nick=bot_username,
+            nick=TWITCH_BOT_USERNAME or "WiduxBot",
             client_id=TWITCH_CLIENT_ID
         )
         self.game_managers = {}
-        self.is_running = True
         self._app = None
+        self._last_triggers = {}  # لتتبع آخر مرة تم فيها تشغيل "وج"
 
     @property
     def app(self):
@@ -40,18 +34,15 @@ class WiduxBot(commands.Bot):
         return self._app
 
     async def event_ready(self):
-        """Called once when the bot goes online."""
         logger.info(f"{self.nick} is online!")
         for channel in self.connected_channels:
             try:
                 with self.app.app_context():
                     self.game_managers[channel.name] = GameManager(self, channel.name)
-                # Removed initial connection message to only respond to mentions and game triggers
             except Exception as e:
                 logger.error(f"Error initializing channel {channel.name}: {str(e)}")
 
     async def event_message(self, message):
-        """Run every time a message is sent in chat."""
         if message.echo:
             return
 
@@ -59,47 +50,43 @@ class WiduxBot(commands.Bot):
         content = message.content.strip()
         username = message.author.name
 
-        logger.info(f"Received message in channel {channel_name}: {content}")
+        # نظام cooldown يدوي (5 ثواني لكل مستخدم)
+        now = asyncio.get_event_loop().time()
+        last_trigger = self._last_triggers.get(username, 0)
+        
+        if content.replace(' ', '') in ['وج؟', 'وج?', 'وج']:
+            if now - last_trigger < 5:  # إذا لم تمر 5 ثواني منذ آخر طلب
+                return
+            self._last_triggers[username] = now  # تحديث وقت آخر تشغيل
+            
+            try:
+                with self.app.app_context():
+                    if channel_name not in self.game_managers:
+                        self.game_managers[channel_name] = GameManager(self, channel.name)
 
+                    game_manager = self.game_managers[channel_name]
+
+                    if game_manager.is_game_active():
+                        await message.channel.send("هناك لعبة قائمة بالفعل! انتظر حتى تنتهي أو اكتب '!resetgame' إذا كنت مشرفًا.")
+                        return
+
+                    game_manager.set_waiting_for_mode(True)
+                    await message.channel.send("هلا والله! إذا بتلعب لحالك اكتب 'فردي' إذا ضد فريق اكتب 'تحدي' وإذا فريقين اكتب 'تيم'.")
+
+            except Exception as e:
+                logger.error(f"Error in game start: {str(e)}")
+                await message.channel.send("حدث خطأ أثناء بدء اللعبة. الرجاء المحاولة مرة أخرى.")
+                return
+
+        # معالجة الرسائل الأخرى للعبة (بدون تعديل)
         try:
             with self.app.app_context():
-                # Check for game trigger phrase
-                if content.strip().replace(' ', '') in ['وج؟', 'وج?', 'وج']:
-                    await self.handle_game_start(message)
-                    return
-
-                # Pass message to game manager if exists
                 if channel_name in self.game_managers:
-                    logger.info(f"Passing message to game manager in channel {channel_name}")
                     await self.game_managers[channel_name].process_message(message)
-
         except Exception as e:
-            logger.error(f"Error processing message in channel {channel_name}: {str(e)}")
-            await message.channel.send("حدث خطأ في معالجة الرسالة. الرجاء المحاولة مرة أخرى.")
-
-    async def handle_game_start(self, message):
-        """Handle game start trigger"""
-        try:
-            channel_name = message.channel.name
-            with self.app.app_context():
-                if channel_name not in self.game_managers:
-                    self.game_managers[channel_name] = GameManager(self, channel_name)
-
-                game_manager = self.game_managers[channel_name]
-
-                if game_manager.is_game_active():
-                    await message.channel.send("هناك لعبة قائمة بالفعل! انتظر حتى تنتهي أو اكتب '!resetgame' إذا كنت مشرفًا.")
-                    return
-
-                game_manager.set_waiting_for_mode(True)
-                await message.channel.send("هلا والله! إذا بتلعب لحالك اكتب 'فردي' إذا ضد فريق اكتب 'تحدي' وإذا فريقين اكتب 'تيم'.")
-
-        except Exception as e:
-            logger.error(f"Error in handle_game_start: {str(e)}")
-            await message.channel.send("حدث خطأ أثناء بدء اللعبة. الرجاء المحاولة مرة أخرى.")
+            logger.error(f"Error processing message: {str(e)}")
 
     def close(self):
-        """Cleanly shut down the bot"""
         self.is_running = False
         logger.info("Bot shutdown initiated")
         for channel_name, game_manager in self.game_managers.items():
@@ -108,5 +95,4 @@ class WiduxBot(commands.Bot):
         super().close()
 
 def create_bot_instance(channels):
-    """Create and return a new bot instance"""
     return WiduxBot(channels)
