@@ -1,0 +1,123 @@
+<div class="container mt-4">
+    <h1 class="mb-4">إعدادات المنشن والردود المخصصة</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">إعدادات عامة للمنشن</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{{ url_for('save_mention_settings') }}">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="max_mentions" class="form-label">الحد الأقصى للمنشنات قبل التايم أوت</label>
+                            <input type="number" class="form-control" id="max_mentions" name="max_mentions" value="{{ current_settings.max_mentions }}" min="1" max="20">
+                            <div class="form-text">عدد المرات التي يمكن للمستخدم أن يمنشن فيها البوت قبل أن يتم إعطاؤه تايم أوت</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="timeout_duration" class="form-label">مدة التايم أوت (بالثواني)</label>
+                            <input type="number" class="form-control" id="timeout_duration" name="timeout_duration" value="{{ current_settings.timeout_duration }}" min="1" max="300">
+                            <div class="form-text">كم ثانية يستمر التايم أوت</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="warning_threshold" class="form-label">عتبة التحذير</label>
+                    <input type="number" class="form-control" id="warning_threshold" name="warning_threshold" value="{{ current_settings.warning_threshold }}" min="1" max="{{ current_settings.max_mentions - 1 }}">
+                    <div class="form-text">عند أي عدد من المنشنات يظهر التحذير (يجب أن يكون أقل من الحد الأقصى للمنشنات)</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="warning_message" class="form-label">رسالة التحذير</label>
+                    <input type="text" class="form-control" id="warning_message" name="warning_message" value="{{ current_settings.warning_message }}">
+                    <div class="form-text">الرسالة التي ستظهر عندما يصل المستخدم إلى عتبة التحذير. استخدم {username} لاسم المستخدم، {count} لعدد المنشنات الحالي، {max_mentions} للحد الأقصى</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="timeout_message" class="form-label">رسالة التايم أوت</label>
+                    <input type="text" class="form-control" id="timeout_message" name="timeout_message" value="{{ current_settings.timeout_message }}">
+                    <div class="form-text">الرسالة التي ستظهر عندما يحصل المستخدم على تايم أوت. استخدم {username} لاسم المستخدم، {timeout} لمدة التايم أوت، {count} لعدد المنشنات، {max_mentions} للحد الأقصى</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="global_cooldown" class="form-label">فترة التهدئة العامة (بالثواني)</label>
+                    <input type="number" class="form-control" id="global_cooldown" name="global_cooldown" value="{{ current_settings.global_cooldown }}" min="0" max="86400">
+                    <div class="form-text">المدة التي يجب انتظارها قبل أن يمكن إعطاء نفس المستخدم تايم أوت مرة أخرى (الافتراضي: يوم كامل = 86400 ثانية)</div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">حفظ الإعدادات</button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="card-title mb-0">الردود المخصصة للمستخدمين</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{{ url_for('save_mention_settings') }}">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="new_username" class="form-label">اسم المستخدم</label>
+                            <input type="text" class="form-control" id="new_username" name="new_username" placeholder="أدخل اسم المستخدم">
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <label for="new_response" class="form-label">الرد المخصص</label>
+                            <input type="text" class="form-control" id="new_response" name="new_response" placeholder="أدخل الرد المخصص لهذا المستخدم">
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" name="add_custom_response" value="1" class="btn btn-success">إضافة رد مخصص</button>
+            </form>
+            
+            <hr>
+            
+            {% if custom_responses %}
+            <h5 class="mt-4 mb-3">الردود المخصصة الحالية</h5>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>اسم المستخدم</th>
+                            <th>الرد المخصص</th>
+                            <th>الحالة</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for response in custom_responses %}
+                        <tr>
+                            <td>{{ response.username }}</td>
+                            <td>{{ response.response }}</td>
+                            <td>
+                                <span class="badge {% if response.active %}bg-success{% else %}bg-danger{% endif %}">
+                                    {% if response.active %}مفعل{% else %}معطل{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <form method="post" action="{{ url_for('save_mention_settings') }}" class="d-inline">
+                                    <button type="submit" name="toggle_response_{{ response.id }}" value="1" class="btn btn-sm {% if response.active %}btn-warning{% else %}btn-success{% endif %}">
+                                        {% if response.active %}تعطيل{% else %}تفعيل{% endif %}
+                                    </button>
+                                    <button type="submit" name="delete_response_{{ response.id }}" value="1" class="btn btn-sm btn-danger" onclick="return confirm('هل أنت متأكد من حذف هذا الرد المخصص؟')">حذف</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info mt-3">
+                لا توجد ردود مخصصة حتى الآن. أضف ردودًا مخصصة لمستخدمين محددين.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>

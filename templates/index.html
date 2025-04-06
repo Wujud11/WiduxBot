@@ -1,1 +1,163 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوت تويتش - لعبة الأسئلة التفاعلية</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <h1 class="display-4 mb-3">بوت تويتش للأسئلة</h1>
+            <p class="lead">بوت تفاعلي يدير لعبة أسئلة بثلاثة أنماط لعب وأنواع مختلفة من الأسئلة</p>
+        </div>
 
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="card shadow mb-4">
+                    <div class="card-header">
+                        <h3>حالة البوت</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-success" role="alert">
+                            <i class="bi bi-check-circle-fill me-2"></i> البوت يعمل الآن
+                        </div>
+                        <div class="text-center mt-3">
+                            <!-- Simple form to add bot to channel -->
+                            <form action="{{ url_for('add_bot_to_channel') }}" method="post" class="mb-3">
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control" name="channel_name" placeholder="اسم قناة تويتش" required>
+                                    <button class="btn btn-primary" type="submit">إضافة البوت للقناة</button>
+                                </div>
+                            </form>
+                            <p class="text-muted mt-2">أضف بوت الأسئلة إلى قناة تويتش الخاصة بك للاستمتاع بالمسابقات التفاعلية</p>
+                        </div>
+                        <div class="d-grid gap-2 mt-3">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <a href="{{ url_for('manage_questions') }}" class="btn btn-outline-info w-100">
+                                        <i class="bi bi-question-circle-fill me-2"></i> إدارة الأسئلة
+                                    </a>
+                                </div>
+                                <div class="col-md-6">
+                                    <a href="{{ url_for('manage_channels') }}" class="btn btn-outline-primary w-100">
+                                        <i class="bi bi-tv me-2"></i> إدارة القنوات
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <a href="{{ url_for('bot_setup') }}" class="btn btn-outline-warning w-100">
+                                        <i class="bi bi-gear-fill me-2"></i> إعداد البوت
+                                    </a>
+                                </div>
+                                <div class="col-md-6">
+                                    <a href="{{ url_for('mention_settings') }}" class="btn btn-outline-danger w-100">
+                                        <i class="bi bi-chat-fill me-2"></i> إعدادات المنشن
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow mb-4">
+                    <div class="card-header">
+                        <h3>أنماط اللعب</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <h4 class="card-title">فردي</h4>
+                                        <p class="card-text">لعب مباشرة</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <h4 class="card-title">تحدي</h4>
+                                        <p class="card-text">لاعب ضد لاعب في نفس الفريق</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <h4 class="card-title">تيم</h4>
+                                        <p class="card-text">فريقين يتنافسون</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow mb-4">
+                    <div class="card-header">
+                        <h3>كيفية بدء اللعبة</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>للبدء في اللعب، اكتب في دردشة تويتش:</p>
+                        <div class="alert alert-dark"><code>وج؟</code></div>
+                        <p>سيرد البوت عليك ويطلب منك اختيار نمط اللعبة:</p>
+                        <ul class="list-group mb-3">
+                            <li class="list-group-item">لكتابة <code>فردي</code> للعب الفردي</li>
+                            <li class="list-group-item">لكتابة <code>تحدي</code> للعب التنافسي</li>
+                            <li class="list-group-item">لكتابة <code>تيم</code> للعب الفرق</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card shadow mb-4">
+                    <div class="card-header">
+                        <h3>أنواع الأسئلة</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>نوع السؤال</th>
+                                        <th>الوصف</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>أسئلة عادية</td>
+                                        <td>تمنح 10 نقاط للإجابة خلال 5 ثوان، و5 نقاط بين 5-10 ثوان</td>
+                                    </tr>
+                                    <tr>
+                                        <td>سؤال ذهبي</td>
+                                        <td>الإجابة الصحيحة تمنح 50 نقطة</td>
+                                    </tr>
+                                    <tr>
+                                        <td>سؤال الزرف</td>
+                                        <td>يمكن سرقة نقاط اللاعب الآخر أو زيادة نقاط فريقك</td>
+                                    </tr>
+                                    <tr>
+                                        <td>سؤال Doom</td>
+                                        <td>الإجابة الصحيحة تضاعف النقاط، والخاطئة تخسرك كل نقاطك</td>
+                                    </tr>
+                                    <tr>
+                                        <td>اختبار المصير</td>
+                                        <td>5 أسئلة متتابعة، بنقاط إضافية ومخاطر</td>
+                                    </tr>
+                                    <tr>
+                                        <td>سؤال Sabotage</td>
+                                        <td>يمكن استبعاد لاعب من الفريق المنافس</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

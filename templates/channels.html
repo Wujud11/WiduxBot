@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة القنوات - بوت تويتش للأسئلة</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <h1 class="display-4 mb-3">إدارة القنوات</h1>
+            <p class="lead">عرض وإدارة قنوات تويتش التي ينضم إليها البوت</p>
+        </div>
+
+        <div class="row">
+            <div class="col-md-10 mx-auto">
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} mb-4">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <div class="card shadow mb-4">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h3 class="mb-0">القنوات النشطة</h3>
+                            <div>
+                                <a href="{{ url_for('home') }}" class="btn btn-sm btn-outline-secondary ms-2">
+                                    <i class="bi bi-arrow-right"></i> العودة للصفحة الرئيسية
+                                </a>
+                                <a href="{{ url_for('manage_questions') }}" class="btn btn-sm btn-outline-info">
+                                    <i class="bi bi-gear-fill"></i> إدارة الأسئلة
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <form action="{{ url_for('add_bot_to_channel') }}" method="post" class="mb-4">
+                            <div class="input-group">
+                                <input type="text" class="form-control" name="channel_name" placeholder="اسم قناة تويتش جديدة" required>
+                                <button class="btn btn-primary" type="submit">إضافة القناة</button>
+                            </div>
+                        </form>
+
+                        {% if channels %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>الاسم</th>
+                                            <th>تاريخ التسجيل</th>
+                                            <th class="text-center">الحالة</th>
+                                            <th class="text-center">الإجراءات</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for channel in channels %}
+                                            <tr>
+                                                <td>{{ channel.name }}</td>
+                                                <td>{{ channel.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                                <td class="text-center">
+                                                    {% if channel.active %}
+                                                        <span class="badge text-bg-success">نشط</span>
+                                                    {% else %}
+                                                        <span class="badge text-bg-danger">غير نشط</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-center">
+                                                    <form action="{{ url_for('toggle_channel', id=channel.id) }}" method="post" class="d-inline">
+                                                        {% if channel.active %}
+                                                            <button type="submit" class="btn btn-sm btn-warning" title="إيقاف">
+                                                                <i class="bi bi-pause-fill"></i>
+                                                            </button>
+                                                        {% else %}
+                                                            <button type="submit" class="btn btn-sm btn-success" title="تفعيل">
+                                                                <i class="bi bi-play-fill"></i>
+                                                            </button>
+                                                        {% endif %}
+                                                    </form>
+                                                    <form action="{{ url_for('delete_channel', id=channel.id) }}" method="post" class="d-inline">
+                                                        <button type="submit" class="btn btn-sm btn-danger" title="حذف" onclick="return confirm('هل أنت متأكد من حذف هذه القناة؟')">
+                                                            <i class="bi bi-trash-fill"></i>
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                <p class="mb-0">لا توجد أي قنوات مسجلة بعد. استخدم النموذج أعلاه لإضافة قناة جديدة.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
