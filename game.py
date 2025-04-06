@@ -174,14 +174,17 @@ class GameManager:
         """Start a new game with the specified mode"""
         logger.info(f"Starting new game with mode: {mode}, initiator: {initiator}")
 
+        from app import app, db
+
         # Create a new game session in the database
-        db_channel = Channel.query.filter_by(name=self.channel_name).first()
-        if not db_channel:
-            # Create channel if it doesn't exist
-            logger.info(f"Creating new channel in database: {self.channel_name}")
-            db_channel = Channel(name=self.channel_name, is_active=True)
-            db.session.add(db_channel)
-            db.session.commit()
+        with app.app_context():
+            db_channel = Channel.query.filter_by(name=self.channel_name).first()
+            if not db_channel:
+                # Create channel if it doesn't exist
+                logger.info(f"Creating new channel in database: {self.channel_name}")
+                db_channel = Channel(name=self.channel_name, is_active=True)
+                db.session.add(db_channel)
+                db.session.commit()
 
         # Create new game session
         self.active_game = GameSession(channel_id=db_channel.id, mode=mode, is_active=True)
