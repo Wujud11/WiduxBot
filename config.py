@@ -51,6 +51,15 @@ LEADER_SELECTION_TIMEOUT = 10  # seconds
 MIN_PLAYERS_CHALLENGE = 2  # Minimum players for challenge mode (at least 2)
 MIN_PLAYERS_TEAM = 3  # Minimum players per team (at least 3)
 
+# رسائل المدح الفردية
+INDIVIDUAL_PRAISE_MESSAGES = [
+    "ممتاز! أداء رائع!",
+    "واصل على هذا المستوى!",
+    "أنت نجم اليوم!",
+    "عبقري!",
+    "ما شاء الله عليك!"
+]
+
 # الردود والرسائل
 ELIMINATION_MESSAGES = [
     "هذي اوووووت",
