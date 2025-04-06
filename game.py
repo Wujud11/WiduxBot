@@ -155,7 +155,7 @@ class GameManager:
             # Send confirmation before starting game
             confirmation = ""
             if content == 'فردي':
-                confirmation = f"@{username} تم بدء اللعبة في وضع اللعب الفردي! 🎮"
+                confirmation = f"@{username} تم بدء اللعبة! اختر عدد الأسئلة من 5-20 (لديك 10 ثواني للإجابة على كل سؤال) 🎮"
             elif content == 'تحدي':
                 confirmation = f"@{username} تم بدء اللعبة في وضع تحدي المجموعة! 👥"
             elif content == 'تيم':
@@ -695,7 +695,7 @@ class GameManager:
         elif self.is_doom_question:
             # Doom question for team mode
             await channel.send("🔥 **DOOM Question!** 🔥")
-            await channel.send(f"قادة الفرق! هذا سؤال خطير لكم القرار تجاوبوا أو تنسحبوا. إذا أجبتم إجابة صحيحة، تتضاعف النقاط! لكن إذا كانت الإجابة خاطئة أو انتهىالوقت، يخسر الفريق جميع نقاطه.")
+            await channel.send(f"قادة الفرق! هذا سؤال خطير لكم القرار تجاوبوا أو تنسحبوا. إذا أجبتم إجابة صحيحة، تتضاعف النقاط! لكن إذا كانت الإجابة خاطئة أو انتهىالوقت، يخسر الفريقجميع نقاطه.")
             await channel.send(f"القادة فقط، اكتبوا ''1' للقبول أو '2' للرفض خلال 10 ثوان.")
 
             self.waiting_for_doom_decision = True
@@ -817,10 +817,10 @@ class GameManager:
                     self.is_fate_test = False
 
                 await asyncio.sleep(2)  # Pause between questions
-                await self.ask_next_question(channel)
+                await self.ask_next_question(message.channel)
             else:
                 await asyncio.sleep(2)  # Pause between questions
-                await self.ask_next_question(channel)
+                await self.ask_next_question(message.channel)
 
     async def handle_question_answer(self, message):
         """Handle player answers to questions"""

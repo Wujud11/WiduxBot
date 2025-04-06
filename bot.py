@@ -46,7 +46,7 @@ class WiduxBot(commands.Bot):
             try:
                 with self.app.app_context():
                     self.game_managers[channel.name] = GameManager(self, channel.name)
-                await channel.send(f"البوت متصل وجاهز للعب! اكتب 'وج؟' لبدء لعبة جديدة.")
+                # Removed initial connection message to only respond to mentions and game triggers
             except Exception as e:
                 logger.error(f"Error initializing channel {channel.name}: {str(e)}")
 
