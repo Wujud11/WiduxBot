@@ -1,1 +1,9 @@
-
+{
+    "mention_enabled": true,
+    "max_mentions": 5,
+    "timeout_duration": 300,
+    "warning_threshold": 3,
+    "warning_message": "تنبيه {username}، لقد قمت بعمل {count} منشن من أصل {max_mentions}",
+    "timeout_message": "{username} تم إعطاؤك تايم أوت لمدة {timeout} ثانية بسبب استخدام {count} منشن",
+    "cooldown_period": 86400
+}
