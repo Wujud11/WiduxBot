@@ -545,7 +545,20 @@ def start_bot():
         python_executable = sys.executable
 
         # تشغيل البوت في الخلفية
-        subprocess.Popen([python_executable, "bot.py"])
+        process = subprocess.Popen([python_executable, "bot.py"], 
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE)
+        
+        # انتظار لحظة للتأكد من بدء البوت
+        import time
+        time.sleep(2)
+        
+        # التحقق من حالة العملية
+        if process.poll() is not None:
+            # قراءة رسائل الخطأ إذا فشل البوت
+            out, err = process.communicate()
+            error_msg = err.decode('utf-8') if err else "خطأ غير معروف"
+            raise Exception(f"فشل تشغيل البوت: {error_msg}")
 
         # إضافة رسالة تأكيد
         channels_names = [ch.get('channel_name', ch.get('channel_id')) for ch in active_channels]

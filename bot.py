@@ -120,6 +120,9 @@ async def main():
 
             elif message.content.startswith('!hello'):
                 await message.channel.send(f'مرحباً {message.author.name}!')
+            
+            elif message.content.strip() == 'وج؟':
+                await message.channel.send(f'أهلاً {message.author.name}! أنا بوت المسابقات WiduxBot. استخدم !help للمساعدة.')
 
             # Add logic to start a new question here (This part is missing from the provided information)
             #  This section requires implementation to fetch a question from a database or a file,
