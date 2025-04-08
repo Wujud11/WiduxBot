@@ -9,6 +9,7 @@
             </div>
             <div class="card-body">
                 <form action="{{ url_for('save_points_settings') }}" method="POST">
+                    {{ form.csrf_token }}
                     <div class="row">
                         <div class="col-md-6 mb-4">
                             <div class="card h-100">
@@ -21,25 +22,25 @@
                                         <input type="number" class="form-control" id="quick_answer_time" name="quick_answer_time" value="{{ form.quick_answer_time.data or 5 }}" min="1" required>
                                         <small class="form-text text-muted">الإجابات التي تتم خلال هذا الوقت تحصل على نقاط الإجابة السريعة</small>
                                     </div>
-                                    
+
                                     <div class="mb-3">
                                         <label for="normal_answer_time" class="form-label">وقت الإجابة العادية (بالثواني)</label>
                                         <input type="number" class="form-control" id="normal_answer_time" name="normal_answer_time" value="{{ form.normal_answer_time.data or 10 }}" min="1" required>
                                         <small class="form-text text-muted">الإجابات التي تتم بعد وقت الإجابة السريعة وقبل هذا الوقت تحصل على نقاط الإجابة العادية</small>
                                     </div>
-                                    
+
                                     <div class="mb-3">
                                         <label for="quick_answer_points" class="form-label">نقاط الإجابة السريعة</label>
                                         <input type="number" class="form-control" id="quick_answer_points" name="quick_answer_points" value="{{ form.quick_answer_points.data or 10 }}" min="0" required>
                                         <small class="form-text text-muted">عدد النقاط للإجابة خلال وقت الإجابة السريعة</small>
                                     </div>
-                                    
+
                                     <div class="mb-3">
                                         <label for="normal_answer_points" class="form-label">نقاط الإجابة العادية</label>
                                         <input type="number" class="form-control" id="normal_answer_points" name="normal_answer_points" value="{{ form.normal_answer_points.data or 5 }}" min="0" required>
                                         <small class="form-text text-muted">عدد النقاط للإجابة خلال وقت الإجابة العادية</small>
                                     </div>
-                                    
+
                                     <div class="mb-3">
                                         <label for="late_answer_points" class="form-label">نقاط الإجابة المتأخرة</label>
                                         <input type="number" class="form-control" id="late_answer_points" name="late_answer_points" value="{{ form.late_answer_points.data or 0 }}" min="0" required>
@@ -48,7 +49,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="col-md-6 mb-4">
                             <div class="card h-100">
                                 <div class="card-header bg-success text-white">
@@ -59,19 +60,19 @@
                                         <input class="form-check-input" type="checkbox" id="streak_enabled" name="streak_enabled" {% if form.streak_enabled.data %}checked{% endif %}>
                                         <label class="form-check-label" for="streak_enabled">تفعيل نظام سلسلة الإجابات الصحيحة (الستريك)</label>
                                     </div>
-                                    
+
                                     <div class="mb-3">
                                         <label for="streak_threshold" class="form-label">عدد الإجابات المتتالية لتفعيل المكافأة</label>
                                         <input type="number" class="form-control" id="streak_threshold" name="streak_threshold" value="{{ form.streak_threshold.data or 3 }}" min="2" required>
                                         <small class="form-text text-muted">عدد الإجابات الصحيحة المتتالية المطلوبة لتفعيل مكافأة السلسلة</small>
                                     </div>
-                                    
+
                                     <div class="mb-3">
                                         <label for="streak_bonus_points" class="form-label">نقاط مكافأة السلسلة</label>
                                         <input type="number" class="form-control" id="streak_bonus_points" name="streak_bonus_points" value="{{ form.streak_bonus_points.data or 10 }}" min="1" required>
                                         <small class="form-text text-muted">عدد النقاط الإضافية عند تحقيق عدد الإجابات المتتالية</small>
                                     </div>
-                                    
+
                                     <div class="form-check form-switch mb-4">
                                         <input class="form-check-input" type="checkbox" id="streak_increase_enabled" name="streak_increase_enabled" {% if form.streak_increase_enabled.data %}checked{% endif %}>
                                         <label class="form-check-label" for="streak_increase_enabled">تفعيل نظام مضاعفة المكافأة مع الاستمرار</label>
@@ -81,7 +82,7 @@
                                             عند تعطيله: نظام ثابت يضيف نفس قيمة المكافأة (10 ثم 10+10 ثم 10+10+10...)
                                         </small>
                                     </div>
-                                    
+
                                     <div class="mb-3">
                                         <label for="streak_messages" class="form-label">رسائل مكافأة السلسلة</label>
                                         <textarea class="form-control" id="streak_messages" name="streak_messages" rows="5" required>{{ form.streak_messages.data or 'استمر! أنت على سلسلة إجابات صحيحة!\nرائع! سلسلة الإجابات الصحيحة مستمرة!\nأنت على نار! سلسلة الإجابات الصحيحة تزداد!' }}</textarea>
@@ -91,7 +92,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="text-center mt-4">
                         <button type="submit" class="btn btn-primary btn-lg"><i class="fas fa-save me-2"></i>حفظ إعدادات النقاط</button>
                     </div>
