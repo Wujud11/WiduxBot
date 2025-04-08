@@ -5,7 +5,7 @@
 {% block content %}
 <div class="container mt-4">
     <h1 class="text-center mb-4">إدارة القنوات</h1>
-    
+
     <div class="row">
         <div class="col-md-6">
             <div class="card mb-4">
@@ -13,7 +13,8 @@
                     <h3 class="card-title mb-0">إضافة قناة جديدة</h3>
                 </div>
                 <div class="card-body">
-                    <form action="{{ url_for('add_channel') }}" method="post">
+                    <form method="POST" action="{{ url_for('add_channel') }}">
+                        {{ form.csrf_token }}
                         <div class="mb-3">
                             <label for="channel_name" class="form-label">{{ form.channel_name.label }}</label>
                             {{ form.channel_name(class="form-control", id="channel_name", placeholder="أدخل اسم القناة") }}
@@ -31,7 +32,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header bg-dark text-light">
@@ -89,7 +90,7 @@
                                                         <i class="bi bi-trash"></i>
                                                     </button>
                                                 </div>
-                                                
+
                                                 <!-- Modal for Editing Channel -->
                                                 <div class="modal fade" id="editChannelModal{{ loop.index0 }}" tabindex="-1" aria-labelledby="editChannelModal{{ loop.index0 }}Label" aria-hidden="true">
                                                     <div class="modal-dialog">
@@ -123,7 +124,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                
+
                                                 <!-- Modal for Deleting Channel -->
                                                 <div class="modal fade" id="deleteChannelModal{{ loop.index0 }}" tabindex="-1" aria-labelledby="deleteChannelModal{{ loop.index0 }}Label" aria-hidden="true">
                                                     <div class="modal-dialog">
