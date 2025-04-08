@@ -8,8 +8,10 @@ from datetime import timedelta
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get("SESSION_SECRET", "widuxbot-secret-key")
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
-app.config['WTF_CSRF_TIME_LIMIT'] = 3600
-csrf = CSRFProtect(app)
+app.config['WTF_CSRF_TIME_LIMIT'] = None
+app.config['WTF_CSRF_CHECK_DEFAULT'] = True
+csrf = CSRFProtect()
+csrf.init_app(app)
 from forms import MentionSettingsForm, CustomReplyForm, QuestionForm, PraiseTeaseForm, ChannelForm, PointsSettingsForm
 
 # Configure logging
