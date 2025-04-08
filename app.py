@@ -2,7 +2,10 @@ import os
 import json
 import logging
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask_wtf.csrf import CSRFProtect
 from werkzeug.utils import secure_filename
+
+csrf = CSRFProtect()
 from forms import MentionSettingsForm, CustomReplyForm, QuestionForm, PraiseTeaseForm, ChannelForm, PointsSettingsForm
 
 # Configure logging
@@ -11,6 +14,7 @@ logging.basicConfig(level=logging.DEBUG)
 # Create Flask app
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "widuxbot-secret-key")
+csrf.init_app(app)
 
 # Ensure data directory exists
 os.makedirs('data', exist_ok=True)
@@ -273,25 +277,34 @@ def delete_question(index):
 
 @app.route('/upload_questions', methods=['POST'])
 def upload_questions():
-    if 'questions_file' not in request.files:
-        flash('لم يتم تحديد ملف', 'danger')
-        return redirect(url_for('questions'))
-    
-    file = request.files['questions_file']
-    
-    if file.filename == '':
-        flash('لم يتم اختيار ملف', 'danger')
-        return redirect(url_for('questions'))
-    
-    if file:
-        try:
-            questions_data = json.loads(file.read().decode('utf-8'))
+    try:
+        if 'questions_file' not in request.files:
+            flash('لم يتم تحديد ملف', 'danger')
+            return redirect(url_for('questions'))
+        
+        file = request.files['questions_file']
+        
+        if file.filename == '':
+            flash('لم يتم اختيار ملف', 'danger')
+            return redirect(url_for('questions'))
+        
+        if file and file.filename.endswith('.json'):
+            content = file.read()
+            if not content:
+                flash('الملف فارغ', 'danger')
+                return redirect(url_for('questions'))
+                
+            questions_data = json.loads(content.decode('utf-8'))
             if save_json('data/questions.json', questions_data):
                 flash(f'تم استيراد {len(questions_data)} سؤال بنجاح', 'success')
             else:
                 flash('حدث خطأ أثناء حفظ الأسئلة', 'danger')
-        except Exception as e:
-            flash(f'حدث خطأ أثناء قراءة الملف: {str(e)}', 'danger')
+        else:
+            flash('يرجى اختيار ملف JSON صحيح', 'danger')
+    except json.JSONDecodeError:
+        flash('الملف المرفوع ليس بصيغة JSON صحيحة', 'danger')
+    except Exception as e:
+        flash(f'حدث خطأ أثناء معالجة الملف: {str(e)}', 'danger')
     
     return redirect(url_for('questions'))
 
