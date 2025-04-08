@@ -1,9 +1,17 @@
 
-import asyncio
+from flask import Flask
 from twitchio.ext import commands
 import os
+import threading
 
-# إعداد البوت
+# إعداد Flask
+app = Flask(__name__)
+
+@app.route("/")
+def index():
+    return "WiduxBot is running!"
+
+# إعداد TwitchIO
 bot = commands.Bot(
     token=os.environ.get("TWITCH_ACCESS_TOKEN"),
     prefix="!",
@@ -26,5 +34,7 @@ async def event_message(message):
 
     await bot.handle_commands(message)
 
+# تشغيل البوت والفلاسك معًا
 if __name__ == "__main__":
-    bot.run()
+    threading.Thread(target=bot.run).start()
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
