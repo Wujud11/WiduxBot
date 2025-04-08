@@ -3,17 +3,25 @@ from wtforms import StringField, IntegerField, BooleanField, TextAreaField, Sele
 from wtforms.validators import DataRequired, NumberRange, Optional
 
 class MentionSettingsForm(FlaskForm):
-    mention_enabled = BooleanField('حالة البوت')
+    mention_enabled = BooleanField('حالة البوت', default=True)
     max_mentions = IntegerField('عدد المنشنات قبل التايم أوت', 
-                               validators=[DataRequired(), NumberRange(min=1, message='يجب أن يكون الرقم أكبر من 0')])
+                               default=5,
+                               validators=[Optional(), NumberRange(min=1, message='يجب أن يكون الرقم أكبر من 0')])
     timeout_duration = IntegerField('مدة التايم أوت (بالثواني)', 
-                                   validators=[DataRequired(), NumberRange(min=1, message='يجب أن يكون الرقم أكبر من 0')])
+                                   default=300,
+                                   validators=[Optional(), NumberRange(min=1, message='يجب أن يكون الرقم أكبر من 0')])
     warning_threshold = IntegerField('عتبة التحذير', 
-                                    validators=[DataRequired(), NumberRange(min=1, message='يجب أن يكون الرقم أكبر من 0')])
-    warning_message = TextAreaField('رسالة التحذير', validators=[DataRequired()])
-    timeout_message = TextAreaField('رسالة التايم أوت', validators=[DataRequired()])
+                                    default=3,
+                                    validators=[Optional(), NumberRange(min=1, message='يجب أن يكون الرقم أكبر من 0')])
+    warning_message = TextAreaField('رسالة التحذير', 
+                                  default='تنبيه {username}، لقد قمت بعمل {count} منشن من أصل {max_mentions}',
+                                  validators=[Optional()])
+    timeout_message = TextAreaField('رسالة التايم أوت', 
+                                  default='{username} تم إعطاؤك تايم أوت لمدة {timeout} ثانية بسبب استخدام {count} منشن',
+                                  validators=[Optional()])
     cooldown_period = IntegerField('فترة التهدئة العامة (بالثواني)', 
-                                  validators=[DataRequired(), NumberRange(min=1, message='يجب أن يكون الرقم أكبر من 0')])
+                                  default=86400,
+                                  validators=[Optional(), NumberRange(min=1, message='يجب أن يكون الرقم أكبر من 0')])
 
     submit = SubmitField('حفظ الإعدادات')
 
