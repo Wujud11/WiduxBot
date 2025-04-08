@@ -101,6 +101,7 @@
                                                             </div>
                                                             <div class="modal-body">
                                                                 <form action="{{ url_for('edit_channel', index=loop.index0) }}" method="post">
+    {{ form.csrf_token }}
                                                                     <div class="mb-3">
                                                                         <label for="channel_name{{ loop.index0 }}" class="form-label">اسم القناة</label>
                                                                         <input type="text" class="form-control" id="channel_name{{ loop.index0 }}" name="channel_name" value="{{ channel.channel_name }}" required>
