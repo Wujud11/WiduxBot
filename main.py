@@ -4,21 +4,25 @@ from twitchio.ext import commands
 import os
 import threading
 
-print(">> [SYSTEM] Starting WiduxBot...")
+print(">> [SYSTEM] Starting WiduxBot Debug V2...")
 
 # إعداد Flask
 app = Flask(__name__)
 
 @app.route("/")
 def index():
-    return "WiduxBot is running!"
+    return "WiduxBot is running (Debug V2)!"
 
 # إعداد TwitchIO
 try:
+    token = os.environ.get("TWITCH_ACCESS_TOKEN")
+    channel = os.environ.get("TWITCH_CHANNEL")
+    print(f">> [ENV] Token: {'OK' if token else 'MISSING'}, Channel: {channel}")
+    
     bot = commands.Bot(
-        token=os.environ.get("TWITCH_ACCESS_TOKEN"),
+        token=token,
         prefix="!",
-        initial_channels=[os.environ.get("TWITCH_CHANNEL")]
+        initial_channels=[channel]
     )
     print(">> [BOT] Bot instance created successfully.")
 except Exception as e:
@@ -26,21 +30,26 @@ except Exception as e:
 
 @bot.event
 async def event_ready():
-    print(f">> [BOT] Logged in as | {bot.nick}")
-    print(f">> [BOT] Joined channels: {bot.connected_channels}")
+    try:
+        print(f">> [BOT] Logged in as | {bot.nick}")
+        print(f">> [BOT] Connected channels: {bot.connected_channels}")
+    except Exception as e:
+        print(f">> [ERROR] inside event_ready: {e}")
 
 @bot.event
 async def event_message(message):
-    print(f">> [CHAT] Received message: {message.content} from {message.author.name}")
-    if message.echo:
-        return
+    try:
+        print(f">> [CHAT] Message from {message.author.name}: {message.content}")
+        if message.echo:
+            return
 
-    msg = message.content.strip().lower()
+        msg = message.content.strip().lower()
+        if msg == "وج؟":
+            await message.channel.send("هلا والله، إذا بتلعب لحالك اكتب فردي، إذا ضد آخرين اكتب تحدي، إذا فريق اكتب تيم.")
 
-    if msg == "وج؟":
-        await message.channel.send("هلا والله، إذا بتلعب لحالك اكتب فردي، إذا ضد آخرين اكتب تحدي، إذا فريق اكتب تيم.")
-
-    await bot.handle_commands(message)
+        await bot.handle_commands(message)
+    except Exception as e:
+        print(f">> [ERROR] inside event_message: {e}")
 
 def run_bot():
     try:
