@@ -1,0 +1,7 @@
+version: '3'
+services:
+  widuxbot:
+    build: .
+    env_file:
+      - .env
+    restart: always
