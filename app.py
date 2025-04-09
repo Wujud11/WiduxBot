@@ -8,6 +8,13 @@ from bot.question_manager import QuestionManager
 app = Flask(__name__)
 manager = QuestionManager()
 
+# قراءة التوكنات من البيئة
+TWITCH_ACCESS_TOKEN = os.getenv("TWITCH_ACCESS_TOKEN")
+TWITCH_CLIENT_ID = os.getenv("TWITCH_CLIENT_ID")
+
+print(f"Twitch Access Token: {TWITCH_ACCESS_TOKEN}")
+print(f"Twitch Client ID: {TWITCH_CLIENT_ID}")
+
 @app.route('/')
 def index():
     return redirect(url_for('questions'))
@@ -20,19 +27,9 @@ def questions():
 @app.route('/add-question', methods=['POST'])
 def add_question():
     data = {
-        "question": request.form['question'],
-        "correct_answer": request.form['correct_answer'],
-        "alt_answers": [ans.strip() for ans in request.form['alt_answers'].split(',')] if request.form['alt_answers'] else [],
-        "category": request.form['category'],
-        "type": request.form['type']
+        "question": request.form.get("question"),
+        "answer": request.form.get("answer"),
+        "choices": request.form.get("choices")
     }
     manager.add_question(data)
     return redirect(url_for('questions'))
-
-@app.route('/delete-question/<int:index>')
-def delete_question(index):
-    manager.delete_question(index)
-    return redirect(url_for('questions'))
-
-if __name__ == '__main__':
-    app.run(debug=True)
