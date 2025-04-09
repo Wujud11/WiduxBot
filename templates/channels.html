@@ -1,0 +1,23 @@
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>إدارة القنوات - WiduxBot</title>
+</head>
+<body>
+    <h1>إدارة القنوات</h1>
+    <form action="/add-channel" method="post">
+        <input name="channel_name" placeholder="اسم القناة" required>
+        <button type="submit">إضافة قناة</button>
+    </form>
+    <ul>
+        {% for channel in settings.settings.keys() %}
+        <li>
+            <strong>{{ channel }}</strong>
+            <a href="/delete-channel/{{ channel }}">❌ حذف القناة</a>
+        </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

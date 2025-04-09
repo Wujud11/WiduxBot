@@ -1,0 +1,21 @@
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>إعدادات الردود - WiduxBot</title>
+</head>
+<body>
+    <h1>إعدادات الردود</h1>
+    <form action="/update-responses" method="post">
+        <label for="win_solo">رد للفوز في وضع فردي:</label>
+        <input type="text" name="win_solo" value="{{ settings.get_setting('custom_responses')['win_solo'] }}" required><br>
+
+        <label for="lose_team">رد للخسارة في وضع التيم:</label>
+        <input type="text" name="lose_team" value="{{ settings.get_setting('custom_responses')['lose_team'] }}" required><br>
+
+        <button type="submit">تحديث الردود</button>
+    </form>
+    <a href="/">رجوع للوحة التحكم</a>
+</body>
+</html>
