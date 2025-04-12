@@ -8,9 +8,9 @@ from bot.questions.sabotage import SabotageQuestion
 from bot.flow.game_flow_manager import start_game
 from bot.question_manager import QuestionManager
 
-
 class WiduxEngine:
-    def __init__(self):
+    def __init__(self, bot):
+        self.bot = bot
         self.players = []
         self.blue_team = []
         self.red_team = []
@@ -21,13 +21,11 @@ class WiduxEngine:
         self.blue_leader = None
         self.red_leader = None
         self.main_player = None
-        self.bot = None
         self.q_manager = QuestionManager()
 
     async def handle_message(self, message):
         content = message.content.strip()
         sender = message.author.name
-        self.bot = message._bot  # حفظ البوت للاستخدام في start_game
 
         if content == "وج؟":
             await message.channel.send("هلا والله! إذا بتلعب لحالك اكتب سولو، إذا ضد الكل اكتب تحدي، وإذا مع ربعك اكتب تيم.")
