@@ -1,12 +1,12 @@
-import json
 import asyncio
 from twitchio.ext import commands
 from bot.engine import WiduxEngine
 from bot.mention_guard import MentionGuard
+from settings_manager import BotSettings
 
-# تحميل الإعدادات من ملف json
-with open("bot_settings.json", "r", encoding="utf-8") as f:
-    settings = json.load(f)
+# تحميل الإعدادات من BotSettings
+bot_settings = BotSettings()
+settings = bot_settings.get_all_settings()
 
 channels = settings.get("channels", [])
 if not channels:
@@ -18,12 +18,12 @@ access_token = settings["access_token"]
 # تهيئة الحارس
 mention_guard = MentionGuard()
 mention_guard.set_config(
-    settings["mention_guard_limit"],
-    settings["mention_guard_duration"],
-    settings["mention_guard_cooldown"],
-    settings["mention_guard_warning_thresh"],
-    settings["mention_guard_warn_msg"],
-    settings["mention_guard_timeout_msg"]
+    settings.get("mention_guard_limit", 2),
+    settings.get("mention_guard_duration", 5),
+    settings.get("mention_guard_cooldown", 86400),
+    settings.get("mention_guard_warning_thresh", 1),
+    settings.get("mention_guard_warn_msg", "ترى ببلعك تايم آوت"),
+    settings.get("mention_guard_timeout_msg", "القم! أنا حذرتك")
 )
 
 class TwitchBot(commands.Bot):
@@ -57,6 +57,3 @@ class TwitchBot(commands.Bot):
         await self.handle_commands(message)
 
 bot = TwitchBot()
-
-if __name__ == "__main__":
-    asyncio.run(bot.run())
