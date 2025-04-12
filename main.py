@@ -18,6 +18,7 @@ access_token = settings["access_token"]
 # تهيئة الحارس مع القيم المطلوبة
 mention_guard = MentionGuard()
 mention_guard.set_config(
+    settings["mention_guard_limit"],
     settings["mention_guard_duration"],
     settings["mention_guard_cooldown"],
     settings["mention_guard_warning_thresh"],
