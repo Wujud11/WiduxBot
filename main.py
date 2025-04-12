@@ -1,7 +1,7 @@
 import json
 import asyncio
 from twitchio.ext import commands
-from bot.engine.engine import WiduxEngine
+from bot.engine import WiduxEngine  # تم التعديل هنا
 from bot.mention_guard import MentionGuard  # استدعاء النظام
 
 # تحميل الإعدادات من ملف json
