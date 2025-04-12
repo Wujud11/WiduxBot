@@ -26,11 +26,10 @@ mention_guard.set_config(
     settings["mention_guard_timeout_msg"]
 )
 
-engine = WiduxEngine()
-
 class TwitchBot(commands.Bot):
     def __init__(self):
         super().__init__(token=access_token, prefix="!", initial_channels=channels)
+        self.engine = WiduxEngine(self)
 
     async def event_ready(self):
         print(f"{bot_username} is connected to Twitch!")
@@ -42,7 +41,7 @@ class TwitchBot(commands.Bot):
         # الرد على منشن البوت
         if message.content.startswith(f"@{bot_username}"):
             response = mention_guard.handle_mention(message.author.name)
-            print("Mention Response:", response)  # طباعة الرد في التيرمنال
+            print("Mention Response:", response)
             response_text = response.get("message")
             if response_text:
                 await message.channel.send(response_text)
@@ -53,7 +52,7 @@ class TwitchBot(commands.Bot):
             await message.channel.send("تمت التجربة بنجاح يا أسطورة!")
             return
 
-        await engine.handle_message(message)
+        await self.engine.handle_message(message)
         await self.handle_commands(message)
 
 bot = TwitchBot()
