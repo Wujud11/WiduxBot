@@ -1,0 +1,18 @@
+{
+  "bot_username": "",
+  "access_token": "",
+  "channels": [],
+
+  "mention_responses": [],
+
+  "solo_win": [],
+  "team_win": [],
+  "solo_lose": [],
+  "group_lose": [],
+  "doom_fail": [],
+  "taunts_leader": [],
+  "taunts_lose": [],
+  "taunts_negative": [],
+  "steal_victim": [],
+  "sabotage_victim": []
+}
