@@ -15,9 +15,15 @@ if not channels:
 bot_username = settings["bot_username"]
 access_token = settings["access_token"]
 
-# تهيئة الحارس
+# تهيئة الحارس مع القيم المطلوبة
 mention_guard = MentionGuard()
-mention_guard.set_config(settings)
+mention_guard.set_config(
+    settings["mention_guard_duration"],
+    settings["mention_guard_cooldown"],
+    settings["mention_guard_warning_thresh"],
+    settings["mention_guard_warn_msg"],
+    settings["mention_guard_timeout_msg"]
+)
 
 engine = WiduxEngine()
 
@@ -40,7 +46,7 @@ class TwitchBot(commands.Bot):
             return
 
         await engine.handle_message(message)
-        await self.handle_commands(message)  # في حال فيه أوامر تبدأ بـ "!"
+        await self.handle_commands(message)
 
 bot = TwitchBot()
 
