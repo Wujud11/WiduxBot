@@ -46,7 +46,6 @@ class NormalQuestion:
             results = '\n'.join([f"{player}: {points} نقطة" for player, points in player_scores.items()])
             await channel.send("نتائج السؤال:\n" + results)
 
-            # ردود مدح حسب الوضع (تم تعديل المفاتيح هنا)
             for player in player_scores:
                 key = "solo_win" if mode == "solo" else "team_win"
                 msg = get_response(key, {"player": player})
@@ -56,3 +55,14 @@ class NormalQuestion:
             await channel.send("ما حد جاوب صح!")
 
         return player_scores
+
+
+class TeamNormalQuestion(NormalQuestion):
+    async def ask(self, channel, bot, teams, points, streaks):
+        player_scores = await super().ask(channel, bot, streaks, mode="team")
+
+        for player, score in player_scores.items():
+            if player in teams["أزرق"]:
+                points[player] = points.get(player, 0) + score
+            elif player in teams["أحمر"]:
+                points[player] = points.get(player, 0) + score
