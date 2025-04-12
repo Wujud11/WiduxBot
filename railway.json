@@ -1,0 +1,17 @@
+{
+  "build": {
+    "env": {
+      "PYTHON_VERSION": "3.11"
+    }
+  },
+  "services": [
+    {
+      "name": "widux-bot",
+      "startCommand": "python main.py"
+    },
+    {
+      "name": "widux-dashboard",
+      "startCommand": "python app.py"
+    }
+  ]
+}
