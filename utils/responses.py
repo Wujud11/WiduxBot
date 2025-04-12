@@ -1,7 +1,7 @@
 import random
-from settings_manager import SettingsManager
+from settings_manager import BotSettings  # تم تعديل الاستيراد
 
-settings = SettingsManager()
+settings = BotSettings()  # تم تعديل الإنشاء
 
 def get_response(key: str, context: dict = None) -> str:
     """
