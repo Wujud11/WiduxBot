@@ -1,10 +1,8 @@
 {
-  "bot_username": "",
-  "access_token": "",
-  "channels": [],
-
+  "bot_username": "WiduxBot",
+  "access_token": "ji41i7iputpp6g5bvrvjpznidrsai6",
+  "channels": ["wujud"],
   "mention_responses": [],
-
   "solo_win": [],
   "team_win": [],
   "solo_lose": [],
