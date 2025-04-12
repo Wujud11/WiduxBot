@@ -15,7 +15,7 @@ if not channels:
 bot_username = settings["bot_username"]
 access_token = settings["access_token"]
 
-# تهيئة الحارس مع القيم المطلوبة
+# تهيئة الحارس
 mention_guard = MentionGuard()
 mention_guard.set_config(
     settings["mention_guard_limit"],
@@ -39,12 +39,13 @@ class TwitchBot(commands.Bot):
             return
 
         # الرد على منشن البوت
-        if message.content.startswith(f"@{bot_username}"):
+        if f"@{bot_username.lower()}" in message.content.lower():
             response = mention_guard.handle_mention(message.author.name)
             print("Mention Response:", response)
-            response_text = response.get("message")
-            if response_text:
-                await message.channel.send(response_text)
+            if response["action"] in ["warn", "roast"]:
+                await message.channel.send(response["message"])
+            elif response["action"] == "timeout":
+                await message.channel.send(f"/timeout {message.author.name} {response['duration']} {response['message']}")
             return
 
         # أمر تجربة يدوي
