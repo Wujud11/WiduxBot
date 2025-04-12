@@ -39,10 +39,16 @@ class TwitchBot(commands.Bot):
         if message.echo:
             return
 
+        # الرد على منشن البوت
         if message.content.startswith(f"@{bot_username}"):
             response_type, response_text = mention_guard.handle_mention(message.author.name)
             if response_text:
                 await message.channel.send(response_text)
+            return
+
+        # أمر تجربة يدوي
+        if message.content.strip() == "!تجربة":
+            await message.channel.send("تمت التجربة بنجاح يا أسطورة!")
             return
 
         await engine.handle_message(message)
