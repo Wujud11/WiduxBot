@@ -2,15 +2,11 @@
   "bot_username": "WiduxBot",
   "access_token": "ji41i7iputpp6g5bvrvjpznidrsai6",
   "channels": ["wujud"],
+
   "mention_responses": [],
-  "solo_win": [],
-  "team_win": [],
-  "solo_lose": [],
-  "group_lose": [],
-  "doom_fail": [],
-  "taunts_leader": [],
-  "taunts_lose": [],
-  "taunts_negative": [],
-  "steal_victim": [],
-  "sabotage_victim": []
+  "duration": 86400,
+  "cooldown": 5,
+  "warning_thresh": 2,
+  "warn_msg": "لا تصايح كل شوي، انتبه!",
+  "timeout_msg": "تايم آوت بسيط، عشان تحترم نفسك شوي."
 }
