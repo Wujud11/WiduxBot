@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>إعدادات قناة - WiduxBot</title>
+</head>
+<body>
+    <h1>إعدادات قناة: {{ channel_name }}</h1>
+    <form action="/update-channel-settings/{{ channel_name }}" method="post">
+        <label for="mention_limit">حد المنشنات:</label>
+        <input type="number" name="mention_limit" value="{{ channel_settings['mention_limit'] }}" required><br>
+
+        <label for="timeout_duration">مدة التايم أوت:</label>
+        <input type="number" name="timeout_duration" value="{{ channel_settings['timeout_duration'] }}" required><br>
+
+        <label for="warning_message">رسالة التحذير:</label>
+        <input type="text" name="warning_message" value="{{ channel_settings['warning_message'] }}" required><br>
+
+        <label for="timeout_message">رسالة التايم أوت:</label>
+        <input type="text" name="timeout_message" value="{{ channel_settings['timeout_message'] }}" required><br>
+
+        <button type="submit">تحديث الإعدادات</button>
+    </form>
+    <a href="/">رجوع للقنوات</a>
+</body>
+</html>
