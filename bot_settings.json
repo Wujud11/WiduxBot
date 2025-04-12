@@ -4,7 +4,6 @@
   "channels": ["wujud"],
 
   "mention_responses": [],
-
   "mention_guard_duration": 86400,
   "mention_guard_cooldown": 5,
   "mention_guard_warning_thresh": 2,
