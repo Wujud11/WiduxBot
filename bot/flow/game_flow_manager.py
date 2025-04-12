@@ -1,7 +1,6 @@
 import random
 from bot.questions.normal import NormalQuestion, TeamNormalQuestion
 from bot.questions.golden import GoldenQuestion
-from bot.questions.steal_or_boost import StealOrBoostQuestion
 from bot.questions.sabotage import SabotageQuestion
 from bot.questions.fate import TestOfFate
 from bot.questions.doom import DoomQuestion
@@ -37,17 +36,24 @@ class GameFlowManager:
                 # في سولو وتحدي يتم المعالجة خارجية
                 pass
 
-        # Steal or Boost
+        # Steal or Boost Question (يتم استيراده حسب الوضع)
         if self.steal and self.game_mode in ["تيم", "تحدي"]:
-            sbq = StealOrBoostQuestion(self.steal["question"], self.steal["answer"], self.steal.get("alt_answers", []))
-            await sbq.ask(channel, bot, teams, leaders, points)
+            if self.game_mode == "تيم":
+                from bot.questions.steal_or_boost import StealOrBoostTeamQuestion as StealOrBoostQuestion
+                sbq = StealOrBoostQuestion(self.steal["question"], self.steal["answer"], self.steal.get("alt_answers", []))
+                await sbq.ask(channel, bot, teams, leaders, points)
+            elif self.game_mode == "تحدي":
+                from bot.questions.steal_or_boost import ChallengeStealOrBoostQuestion as StealOrBoostQuestion
+                sbq = StealOrBoostQuestion(self.steal["question"], self.steal["answer"], self.steal.get("alt_answers", []))
+                players = list(points.keys())
+                await sbq.ask(channel, bot, players, points)
 
-        # Sabotage
+        # Sabotage Question
         if self.sabotage and self.game_mode in ["تيم", "تحدي"]:
             sabotage_q = SabotageQuestion(self.sabotage["question"], self.sabotage["answer"], self.sabotage.get("alt_answers", []))
             await sabotage_q.ask(channel, bot, teams, leaders, points)
 
-        # Fate Test
+        # Test of Fate
         if self.fate:
             ft = TestOfFate(self.fate)
             all_players = []
