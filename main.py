@@ -41,7 +41,9 @@ class TwitchBot(commands.Bot):
 
         # الرد على منشن البوت
         if message.content.startswith(f"@{bot_username}"):
-            response_type, response_text = mention_guard.handle_mention(message.author.name)
+            response = mention_guard.handle_mention(message.author.name)
+            print("Mention Response:", response)  # طباعة الرد في التيرمنال
+            response_text = response.get("message")
             if response_text:
                 await message.channel.send(response_text)
             return
