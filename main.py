@@ -1,8 +1,8 @@
 import json
 import asyncio
 from twitchio.ext import commands
-from bot.engine import WiduxEngine  # تم التعديل هنا
-from bot.mention_guard import MentionGuard  # استدعاء النظام
+from bot.engine import WiduxEngine
+from bot.mention_guard import MentionGuard
 
 # تحميل الإعدادات من ملف json
 with open("bot_settings.json", "r", encoding="utf-8") as f:
@@ -38,7 +38,6 @@ class TwitchBot(commands.Bot):
         if message.echo:
             return
 
-        # الرد على منشن البوت إذا موجود
         if message.content.startswith(f"@{bot_username}"):
             response_type, response_text = mention_guard.handle_mention(message.author.name)
             if response_text:
