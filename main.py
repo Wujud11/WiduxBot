@@ -1,59 +1,85 @@
-import asyncio
-from twitchio.ext import commands
-from bot.engine import WiduxEngine
-from bot.mention_guard import MentionGuard
-from settings_manager import BotSettings
+import time
+import random
 
-# تحميل الإعدادات من BotSettings
-bot_settings = BotSettings()
-settings = bot_settings.get_all_settings()
-
-channels = settings.get("channels", [])
-if not channels:
-    raise ValueError("ما فيه ولا قناة مضافة! ضيفي قناة من لوحة التحكم.")
-
-bot_username = settings["bot_username"]
-access_token = settings["access_token"]
-
-# تهيئة الحارس
-mention_guard = MentionGuard()
-mention_guard.set_config(
-    settings.get("mention_guard_limit", 2),
-    settings.get("mention_guard_duration", 5),
-    settings.get("mention_guard_cooldown", 86400),
-    settings.get("mention_guard_warning_thresh", 1),
-    settings.get("mention_guard_warn_msg", "ترى ببلعك تايم آوت"),
-    settings.get("mention_guard_timeout_msg", "القم! أنا حذرتك")
-)
-
-class TwitchBot(commands.Bot):
+class MentionGuard:
     def __init__(self):
-        super().__init__(token=access_token, prefix="!", initial_channels=channels)
-        self.engine = WiduxEngine(self)
+        self.mention_counts = {}       # {user: count}
+        self.timeout_given = {}        # {user: timestamp}
+        self.special_responses = {}    # {user: [custom replies]}
+        self.general_roasts = [        # ردود الطقطقة العامة
+            "وش تبي؟ مشغوووول!",
+            "ترى منشنك قاعد يستهلك طاقتي.",
+            "قلنا لا تمنشنني! كأني فاضي؟",
+            "ترى البوت عنده دوام يا ورع!",
+            "برجع لك بعد سنة إذا خلصت المنشنات اللي قبلك.",
+            "شكلك بتبلع تايم أوت قريب... اسحب."
+        ]
+        self.warning_threshold = 2  # لا يوجد تحذير قبل هذا الرقم
+        self.mention_limit = 3     # عدد المنشنات المسموح بها
+        self.timeout_duration = 3  # مدة التايم أوت (بالثواني)
+        self.cooldown_period = 86400  # فترة التهدئة (يوم كامل)
+        self.warning_message = "ترى ببلعك تايم أوت"
+        self.timeout_message = "القم! أنا حذرتك"
 
-    async def event_ready(self):
-        print(f"{bot_username} is connected to Twitch!")
+        # تم إضافة قائمة المستخدمين الذين تم إلغاء التايم أوت عليهم
+        self.no_timeout_users = set()
 
-    async def event_message(self, message):
-        if message.echo:
-            return
+    def set_config(self, limit, duration, cooldown, warning_thresh, warn_msg, timeout_msg):
+        self.mention_limit = limit
+        self.timeout_duration = duration
+        self.cooldown_period = cooldown
+        self.warning_threshold = warning_thresh
+        self.warning_message = warn_msg
+        self.timeout_message = timeout_msg
 
-        # الرد على منشن البوت
-        if f"@{bot_username.lower()}" in message.content.lower():
-            response = mention_guard.handle_mention(message.author.name)
-            print("Mention Response:", response)
-            if response["action"] in ["warn", "roast"]:
-                await message.channel.send(response["message"])
-            elif response["action"] == "timeout":
-                await message.channel.send(f"/timeout {message.author.name} {response['duration']} {response['message']}")
-            return
+    def add_special_responses(self, username, responses):
+        self.special_responses[username] = responses
 
-        # أمر تجربة يدوي
-        if message.content.strip() == "!تجربة":
-            await message.channel.send("تمت التجربة بنجاح يا أسطورة!")
-            return
+    def handle_mention(self, user):
+        # إذا كان المستخدم في قائمة المستخدمين الذين تم إلغاء التايم أوت عليهم، يتم الرد مباشرة دون تطبيق التايم أوت
+        if user in self.no_timeout_users:
+            if user in self.special_responses:
+                return {"action": "roast", "message": random.choice(self.special_responses[user])}
+            else:
+                return {"action": "roast", "message": random.choice(self.general_roasts)}
 
-        await self.engine.handle_message(message)
-        await self.handle_commands(message)
+        now = time.time()
 
-bot = TwitchBot()
+        # زيادة عدد المرات التي ذكر فيها المستخدم
+        self.mention_counts[user] = self.mention_counts.get(user, 0) + 1
+
+        # إذا تجاوز الحد المسموح به للمنشن
+        if self.mention_counts[user] == self.warning_threshold:
+            return {"action": "warn", "message": self.warning_message}
+
+        # إذا تجاوز الحد المسموح للمنشن، يتم تطبيق التايم أوت
+        if self.mention_counts[user] >= self.mention_limit:
+            if user not in self.timeout_given:
+                self.timeout_given[user] = now
+                return {
+                    "action": "timeout",
+                    "message": self.timeout_message,
+                    "duration": self.timeout_duration
+                }
+
+            # إذا كانت المدة التهدئة انتهت، يتم إزالة التايم أوت
+            if now - self.timeout_given[user] >= self.cooldown_period:
+                self.timeout_given[user] = now
+                self.reset_timeout(user)  # إلغاء التايم أوت بعد فترة التهدئة
+                return {
+                    "action": "timeout",
+                    "message": self.timeout_message,
+                    "duration": self.timeout_duration
+                }
+
+            # الرد على المستخدم برسائل عشوائية في حال كان لديه ردود خاصة أو لا
+            if user in self.special_responses:
+                return {"action": "roast", "message": random.choice(self.special_responses[user])}
+            else:
+                return {"action": "roast", "message": random.choice(self.general_roasts)}
+
+        return {"action": "none"}
+
+    # هذه الدالة تقوم بإلغاء التايم أوت بعد انقضاء فترة التهدئة
+    def reset_timeout(self, user):
+        self.no_timeout_users.add(user)
