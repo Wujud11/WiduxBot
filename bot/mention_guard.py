@@ -14,10 +14,10 @@ class MentionGuard:
             "برجع لك بعد سنة إذا خلصت المنشنات اللي قبلك.",
             "شكلك بتبلع تايم أوت قريب... اسحب."
         ]
-        self.warning_threshold = 1
-        self.mention_limit = 2
-        self.timeout_duration = 5  # ثواني
-        self.cooldown_period = 86400  # يوم كامل
+        self.warning_threshold = 2  # لا يوجد تحذير قبل هذا الرقم
+        self.mention_limit = 3     # عدد المنشنات المسموح بها
+        self.timeout_duration = 3  # مدة التايم أوت (بالثواني)
+        self.cooldown_period = 86400  # فترة التهدئة (يوم كامل)
         self.warning_message = "ترى ببلعك تايم أوت"
         self.timeout_message = "القم! أنا حذرتك"
 
@@ -65,6 +65,7 @@ class MentionGuard:
             # إذا كانت المدة التهدئة انتهت، يتم إزالة التايم أوت
             if now - self.timeout_given[user] >= self.cooldown_period:
                 self.timeout_given[user] = now
+                self.reset_timeout(user)  # إلغاء التايم أوت بعد فترة التهدئة
                 return {
                     "action": "timeout",
                     "message": self.timeout_message,
@@ -81,4 +82,4 @@ class MentionGuard:
 
     # هذه الدالة تقوم بإلغاء التايم أوت بعد انقضاء فترة التهدئة
     def reset_timeout(self, user):
-        self.no_timeout_users.add(user)  # إضافة المستخدم إلى قائمة الذين لا يتم تطبيق التايم أوت عليهم
+        self.no_timeout_users.add(user)
