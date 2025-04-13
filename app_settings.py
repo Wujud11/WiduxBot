@@ -32,7 +32,14 @@ def update_settings():
         "lowest_leader_responses",
         "team_lose_responses",
         "solo_lose_responses",
-        "group_individual_lose_responses"
+        "group_individual_lose_responses",
+        "mention_guard_limit",
+        "mention_guard_duration",
+        "mention_guard_cooldown",
+        "mention_guard_warning_thresh",
+        "mention_guard_warn_msg",
+        "mention_guard_timeout_msg",
+        "special_mention_responses",  # تم إضافة هذا الحقل
     ]
 
     new_settings = load_settings()
