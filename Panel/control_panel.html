@@ -1,1 +1,185 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>لوحة التحكم - الردود والمنشن</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      direction: rtl;
+      background-color: #121212;
+      color: #e0e0e0;
+      padding: 30px;
+    }
+    h2 {
+      background: #1f1f1f;
+      color: #fff;
+      padding: 15px 20px;
+      border-radius: 8px;
+    }
+    .section {
+      background: #1e1e1e;
+      padding: 25px;
+      margin-top: 25px;
+      border-radius: 10px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.3);
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 15px;
+      color: #ccc;
+    }
+    select, input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 6px;
+      color: #eee;
+    }
+    button {
+      background-color: #8b5cf6;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #7c3aed;
+    }
+    ul { list-style: none; padding: 0; }
+    ul li {
+      background: #2c2c2c;
+      margin: 6px 0;
+      padding: 8px 12px;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
 
+<h2>الردود العامة</h2>
+<div class="section">
+  <label>اختر نوع الرد:</label>
+  <select id="responseType" onchange="loadResponses()">
+    <option value="">-- اختر نوع الرد --</option>
+    <option>solo_win_responses</option>
+    <option>group_win_responses</option>
+    <option>team_win_responses</option>
+    <option>streak_responses</option>
+    <option>low_score_responses</option>
+    <option>taunts_negative</option>
+    <option>doom_leader_fail_responses</option>
+    <option>lowest_leader_responses</option>
+    <option>sabotage_victim</option>
+    <option>stolen_points_responses</option>
+    <option>general_roasts</option>
+  </select>
+
+  <ul id="responsesList"></ul>
+
+  <input type="text" id="newResponse" placeholder="أدخل رد جديد">
+  <button onclick="addResponse()">إضافة الرد</button>
+</div>
+
+<h2>إعدادات المنشن</h2>
+<div class="section" id="mentionSettings"></div>
+
+<h2>ردود خاصة للمستخدمين</h2>
+<div class="section">
+  <textarea id="specialResponses" rows="10" placeholder="special_responses بصيغة JSON..."></textarea>
+  <button onclick="updateSpecial()">تحديث الردود الخاصة</button>
+</div>
+
+<script>
+const api = "http://localhost:5000";
+
+// === ردود عامة ===
+function loadResponses() {
+  const type = document.getElementById("responseType").value;
+  fetch(`${api}/responses?type=${type}`)
+    .then(res => res.json())
+    .then(data => {
+      const list = document.getElementById("responsesList");
+      list.innerHTML = "";
+      data.forEach(reply => {
+        const li = document.createElement("li");
+        li.innerHTML = `${reply} <button onclick="deleteResponse('${type}', '${reply}')">حذف</button>`;
+        list.appendChild(li);
+      });
+    });
+}
+
+function addResponse() {
+  const type = document.getElementById("responseType").value;
+  const value = document.getElementById("newResponse").value;
+  fetch(`${api}/responses`, {
+    method: "POST",
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({type: type, response: value})
+  }).then(loadResponses);
+}
+
+function deleteResponse(type, value) {
+  fetch(`${api}/responses`, {
+    method: "DELETE",
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({type: type, response: value})
+  }).then(loadResponses);
+}
+
+// === إعدادات المنشن ===
+function loadMentionSettings() {
+  fetch(`${api}/mention-settings`)
+    .then(res => res.json())
+    .then(data => {
+      const div = document.getElementById("mentionSettings");
+      div.innerHTML = "";
+      Object.entries(data).forEach(([key, val]) => {
+        div.innerHTML += `<label>${key}</label><input onchange="updateMention('${key}', this.value)" value="${val}">`;
+      });
+    });
+}
+
+function updateMention(key, value) {
+  fetch(`${api}/mention-settings`, {
+    method: "PUT",
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({[key]: isNaN(value) ? value : Number(value)})
+  });
+}
+
+// === الردود الخاصة ===
+function loadSpecial() {
+  fetch(`${api}/special-responses`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("specialResponses").value = JSON.stringify(data, null, 2);
+    });
+}
+
+function updateSpecial() {
+  const raw = document.getElementById("specialResponses").value;
+  try {
+    const parsed = JSON.parse(raw);
+    fetch(`${api}/special-responses`, {
+      method: "PUT",
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(parsed)
+    });
+  } catch (err) {
+    alert("الردود الخاصة لازم تكون بصيغة JSON صحيحة!");
+  }
+}
+
+loadMentionSettings();
+loadSpecial();
+</script>
+</body>
+</html>
