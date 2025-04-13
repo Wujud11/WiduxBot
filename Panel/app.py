@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 import json
 import os
 
@@ -15,14 +15,16 @@ def save_settings(data):
     with open(SETTINGS_FILE, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
-# قراءة الردود حسب النوع
+@app.route('/')
+def home():
+    return send_file('control_panel.html')
+
 @app.route('/responses', methods=['GET'])
 def get_responses():
     response_type = request.args.get('type')
     data = load_settings()
     return jsonify(data.get(response_type, []))
 
-# إضافة رد
 @app.route('/responses', methods=['POST'])
 def add_response():
     payload = request.json
@@ -33,7 +35,6 @@ def add_response():
     save_settings(data)
     return jsonify({"status": "added", "response": reply})
 
-# حذف رد
 @app.route('/responses', methods=['DELETE'])
 def delete_response():
     payload = request.json
@@ -46,7 +47,6 @@ def delete_response():
         return jsonify({"status": "deleted"})
     return jsonify({"status": "not found"}), 404
 
-# جلب إعدادات المنشن
 @app.route('/mention-settings', methods=['GET'])
 def get_mention_settings():
     data = load_settings()
@@ -60,7 +60,6 @@ def get_mention_settings():
     ]
     return jsonify({k: data.get(k) for k in keys})
 
-# تحديث إعدادات المنشن
 @app.route('/mention-settings', methods=['PUT'])
 def update_mention_settings():
     payload = request.json
@@ -70,13 +69,11 @@ def update_mention_settings():
     save_settings(data)
     return jsonify({"status": "updated", "settings": payload})
 
-# جلب الردود الخاصة
 @app.route('/special-responses', methods=['GET'])
 def get_special_responses():
     data = load_settings()
     return jsonify(data.get('special_responses', {}))
 
-# تحديث الردود الخاصة
 @app.route('/special-responses', methods=['PUT'])
 def update_special_responses():
     payload = request.json  # {"user_id": [...responses]}
