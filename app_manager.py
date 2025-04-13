@@ -11,9 +11,18 @@ def settings_page():
         settings.update_setting("bot_username", request.form.get("bot_username", ""))
         settings.update_setting("access_token", request.form.get("access_token", ""))
 
-        mention_raw = request.form.get("mention_responses", "")
-        mention_list = [line.strip() for line in mention_raw.splitlines() if line.strip()]
-        settings.update_setting("mention_responses", mention_list)
+        # إضافة تحديثات المنشن
+        settings.update_setting("mention_guard_limit", int(request.form.get("mention_guard_limit", 2)))
+        settings.update_setting("mention_guard_duration", int(request.form.get("mention_guard_duration", 5)))
+        settings.update_setting("mention_guard_cooldown", int(request.form.get("mention_guard_cooldown", 86400)))
+        settings.update_setting("mention_guard_warning_thresh", int(request.form.get("mention_guard_warning_thresh", 2)))
+        settings.update_setting("mention_guard_warn_msg", request.form.get("mention_guard_warn_msg", "ترى ببلعك تايم أوت"))
+        settings.update_setting("mention_guard_timeout_msg", request.form.get("mention_guard_timeout_msg", "القم! أنا حذرتك"))
+
+        # تحديث الردود الخاصة
+        mention_responses = request.form.get("special_mention_responses", "")
+        special_responses = {key: value.split(",") for key, value in (mention_responses.items())}
+        settings.update_setting("special_mention_responses", special_responses)
 
         return redirect("/settings")
 
