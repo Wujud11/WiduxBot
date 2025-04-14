@@ -1,4 +1,5 @@
-from utils.responses import get_response
+# bot/questions/normal.py
+
 import time
 
 class NormalQuestion:
@@ -9,7 +10,7 @@ class NormalQuestion:
         self.answers = {}
 
     async def ask(self, channel, bot, streaks, mode="solo"):
-        await channel.send(f"السؤال: {self.question} (10 ثواني تجاوب!)")
+        await channel.send(f"السؤال: {self.question} (10 ثوانٍ للإجابة!)")
         start_time = time.time()
 
         def check_response(msg):
@@ -41,18 +42,6 @@ class NormalQuestion:
         for player in all_players:
             if player not in self.answers:
                 streaks[player] = 0
-
-        if player_scores:
-            results = '\n'.join([f"{player}: {points} نقطة" for player, points in player_scores.items()])
-            await channel.send("نتائج السؤال:\n" + results)
-
-            for player in player_scores:
-                key = "solo_win" if mode == "solo" else "team_win"
-                msg = get_response(key, {"player": player})
-                if msg:
-                    await channel.send(msg)
-        else:
-            await channel.send("ما حد جاوب صح!")
 
         return player_scores
 
