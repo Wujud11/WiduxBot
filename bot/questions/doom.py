@@ -1,6 +1,8 @@
+# bot/questions/doom.py
+
+import asyncio
 from utils.responses import get_response
 from utils.leader_utils import taunt_lowest_leader
-import asyncio
 
 class DoomQuestion:
     def __init__(self, question, correct_answer, alt_answers=None):
@@ -54,23 +56,25 @@ class DoomQuestion:
                 team = "أزرق" if leader in teams["أزرق"] else "أحمر"
                 for player in teams[team]:
                     points[player] = 0
-
                 msg = get_response("doom_fail", {"leader": leader})
                 if msg:
                     await channel.send(msg)
 
         elif len(accepted_leaders) == 2:
             await channel.send("الفريقين قبلوا التحدي! القادة فقط من يجاوب الآن.")
-            await channel.send(f"السؤال: {self.question} (10 ثواني!)")
+            await channel.send(f"السؤال: {self.question} (10 ثوانٍ!)")
+
             answered_by = None
+            correct = None
 
             def check_any(msg):
-                nonlocal answered_by
+                nonlocal answered_by, correct
                 user = msg.author.name
                 response = msg.content.strip().lower()
                 all_answers = [self.correct_answer] + self.alt_answers
-                if user in leaders.values() and response in all_answers:
+                if user in leaders.values() and answered_by is None:
                     answered_by = user
+                    correct = response in all_answers
                 return False
 
             await bot.wait_for_responses(10, check_any)
@@ -82,14 +86,39 @@ class DoomQuestion:
                 await end_team_game(leaders, teams, points, channel)
                 return points
 
-            winner_team = "أزرق" if answered_by in teams["أزرق"] else "أحمر"
+            winner_leader = answered_by
+            loser_leader = [l for l in leaders.values() if l != winner_leader][0]
+
+            winner_team = "أزرق" if winner_leader in teams["أزرق"] else "أحمر"
             loser_team = "أحمر" if winner_team == "أزرق" else "أزرق"
 
-            await channel.send(f"{answered_by} جاوب صح! نقاط فريقه تتضاعف، والفريق الآخر يخسر نقاطه.")
-            for player in teams[winner_team]:
-                points[player] *= 2
-            for player in teams[loser_team]:
-                points[player] = 0
+            if not correct:
+                await channel.send(f"{winner_leader} جاوب خطأ! فريقه خسر الجولة.")
+                for player in teams[winner_team]:
+                    points[player] = 0
+                msg = get_response("doom_fail", {"leader": winner_leader})
+                if msg:
+                    await channel.send(msg)
+            else:
+                score_winner = sum(points.get(p, 0) for p in teams[winner_team])
+                score_loser = sum(points.get(p, 0) for p in teams[loser_team])
+
+                if score_winner > score_loser:
+                    for player in teams[winner_team]:
+                        points[player] *= 2
+                    await channel.send(f"{winner_leader} جاوب صح وفريقه تفوق بالنقاط! الفريق الثاني خسر الجولة.")
+                    for player in teams[loser_team]:
+                        points[player] = 0
+                    msg = get_response("doom_fail", {"leader": loser_leader})
+                    if msg:
+                        await channel.send(msg)
+                else:
+                    await channel.send(f"{winner_leader} جاوب صح لكن فريقه أضعف بالنقاط! يخسر الجولة.")
+                    for player in teams[winner_team]:
+                        points[player] = 0
+                    msg = get_response("doom_fail", {"leader": winner_leader})
+                    if msg:
+                        await channel.send(msg)
 
         await end_team_game(leaders, teams, points, channel)
         return points
