@@ -1,4 +1,5 @@
-from utils.responses import get_response
+# bot/questions/golden.py
+
 import time
 
 class GoldenQuestion:
@@ -9,7 +10,7 @@ class GoldenQuestion:
 
     async def ask(self, channel, bot, game_mode, teams=None, points=None):
         await channel.send("استعدوا... هذا هو السؤال الذهبي!")
-        await channel.send(f"السؤال: {self.question} (عندكم 10 ثواني!)")
+        await channel.send(f"السؤال: {self.question} (عندكم 10 ثوانٍ للإجابة!)")
         start_time = time.time()
         winner = None
 
@@ -28,12 +29,13 @@ class GoldenQuestion:
             await channel.send("خلص الوقت! ما حد جاوب.")
             return {}
 
-        await channel.send(f"{winner} جاوب صح! حصل على 100 نقطة.")
+        await channel.send(f"{winner} جاوب صح! فريقه حصل على 100 نقطة.")
 
         if game_mode == "تيم" and teams and points:
             team = "أزرق" if winner in teams["أزرق"] else "أحمر"
+            share = 100 // len(teams[team])
             for player in teams[team]:
-                points[player] = points.get(player, 0) + 100
+                points[player] = points.get(player, 0) + share
             return points
         else:
             return {winner: 100}
