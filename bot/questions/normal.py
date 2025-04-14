@@ -9,7 +9,7 @@ class NormalQuestion:
         self.alt_answers = [ans.lower() for ans in (alt_answers or [])]
         self.answers = {}
 
-    async def ask(self, channel, bot, streaks, mode="solo"):
+    async def ask(self, channel, bot, mode="solo"):
         await channel.send(f"السؤال: {self.question} (10 ثوانٍ للإجابة!)")
         start_time = time.time()
 
@@ -27,28 +27,17 @@ class NormalQuestion:
 
         player_scores = {}
         for player, response_time in self.answers.items():
-            points = 0
             if response_time <= 5:
-                points = 10
+                player_scores[player] = 10
             elif response_time <= 10:
-                points = 5
-
-            streaks[player] += 1
-            bonus = (streaks[player] // 3) * 10 if streaks[player] % 3 == 0 else 0
-            total_points = points + bonus
-            player_scores[player] = total_points
-
-        all_players = bot.get_all_players()
-        for player in all_players:
-            if player not in self.answers:
-                streaks[player] = 0
+                player_scores[player] = 5
 
         return player_scores
 
 
 class TeamNormalQuestion(NormalQuestion):
-    async def ask(self, channel, bot, teams, points, streaks):
-        player_scores = await super().ask(channel, bot, streaks, mode="team")
+    async def ask(self, channel, bot, teams, points):
+        player_scores = await super().ask(channel, bot, mode="team")
 
         for player, score in player_scores.items():
             if player in teams["أزرق"]:
