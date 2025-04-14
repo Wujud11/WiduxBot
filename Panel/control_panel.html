@@ -43,6 +43,32 @@
   <ul id="responses-list"></ul>
 </div>
 
+<h2>إعدادات القنوات</h2>
+<div class="section">
+  <h3>إضافة قناة جديدة</h3>
+  <input type="text" id="new-channel-name" placeholder="اسم القناة الجديدة">
+  <button onclick="addChannel()">إضافة القناة</button>
+
+  <h3>القنوات الحالية</h3>
+  <ul id="channels-list"></ul>
+</div>
+
+<h2>إعدادات الأسئلة</h2>
+<div class="section">
+  <h3>إضافة سؤال جديد</h3>
+  <input type="text" id="question-text" placeholder="أدخل السؤال">
+  <input type="text" id="correct-answer" placeholder="الإجابة الصحيحة">
+  <input type="text" id="alt-answers" placeholder="الإجابات البديلة (مفصولة بفواصل)">
+  <button onclick="addQuestion()">إضافة السؤال</button>
+
+  <h3>رفع أسئلة من ملف JSON</h3>
+  <input type="file" id="questions-file">
+  <button onclick="uploadQuestions()">رفع الأسئلة</button>
+
+  <h3>الأسئلة الحالية</h3>
+  <ul id="questions-list"></ul>
+</div>
+
 <h2>ردود المنشن العامة</h2>
 <div class="section">
   <textarea id="mention_responses_box" rows="6"></textarea>
@@ -222,21 +248,10 @@ async function loadSpecialUsers() {
 }
 
 window.onload = async () => {
-  document.getElementById("response-type").addEventListener("change", loadResponses);
   loadResponses();
-  const mention = await fetchJson("/mention-settings");
-  document.getElementById("mention_limit").value = mention.mention_limit;
-  document.getElementById("mention_guard_warn_msg").value = mention.mention_guard_warn_msg;
-  document.getElementById("mention_guard_timeout_msg").value = mention.mention_guard_timeout_msg;
-  document.getElementById("mention_guard_duration").value = mention.mention_guard_duration;
-  document.getElementById("mention_cooldown").value = mention.mention_cooldown;
-  document.getElementById("mention_daily_cooldown").checked = mention.mention_daily_cooldown;
-  const data = await fetchJson("/special-responses");
-  document.getElementById("mention_responses_box").value = (data.mention_responses || []).join("\n");
-  const groasts = await fetchJson("/responses?type=general_roasts");
-  document.getElementById("general_roasts_box").value = groasts.join("\n");
   loadSpecialUsers();
 };
 </script>
+
 </body>
 </html>
