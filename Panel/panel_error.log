@@ -1,0 +1,40 @@
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://128.199.217.221:5000
+Press CTRL+C to quit
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 582-297-071
+168.149.21.31 - - [14/Apr/2025 04:54:32] "GET /special-responses HTTP/1.1" 200 -
+168.149.21.31 - - [14/Apr/2025 04:54:33] "PUT /special-responses HTTP/1.1" 200 -
+92.255.57.55 - - [14/Apr/2025 04:55:00] code 400, message Bad request version ('À\x13À')
+92.255.57.55 - - [14/Apr/2025 04:55:00] "\x16\x03\x01\x05¨\x01\x00\x05¤\x03\x03\x8aÞ¤ó«g,w\x8aÒ\x81ÊÛÖgãl±ßl\x0búz´·Ó"\\©![e _)â³\x91µ}\x8b\x10ìÂþìÉ(5\x9b\x81?´V<IE OÓ\x0c\x81Ü\x7fó\x00\x1aÀ+À/À,À0Ì©Ì¨À\x09À\x13À" HTTPStatus.BAD_REQUEST -
+92.255.57.55 - - [14/Apr/2025 04:55:00] code 400, message Bad request version ('À\x13À')
+92.255.57.55 - - [14/Apr/2025 04:55:00] "\x16\x03\x01\x05¨\x01\x00\x05¤\x03\x03JX}/jPåï \x0d-\x0dVû\x196aõÙ×eÆ\x106\x0d)Eî8&\x11\x17 \x03Â\x96áÙò\x19\x88\x90UÖg`tÇ[w9»q[fGwÖz§Áàé:8\x00\x1aÀ+À/À,À0Ì©Ì¨À\x09À\x13À" HTTPStatus.BAD_REQUEST -
+92.255.57.55 - - [14/Apr/2025 04:55:00] "GET /v2/_catalog HTTP/1.1" 404 -
+92.255.57.55 - - [14/Apr/2025 04:55:00] "GET /v2/_catalog HTTP/1.1" 404 -
+168.149.21.31 - - [14/Apr/2025 04:55:10] "POST /responses HTTP/1.1" 200 -
+168.149.21.31 - - [14/Apr/2025 04:55:11] "GET /responses?type=solo_win_responses HTTP/1.1" 200 -
+168.149.21.31 - - [14/Apr/2025 04:57:33] "POST /responses HTTP/1.1" 200 -
+168.149.21.31 - - [14/Apr/2025 04:57:33] "GET /responses?type=solo_win_responses HTTP/1.1" 200 -
+168.149.21.31 - - [14/Apr/2025 04:58:09] "POST /responses HTTP/1.1" 200 -
+168.149.21.31 - - [14/Apr/2025 04:58:09] "GET /responses?type=solo_win_responses HTTP/1.1" 200 -
+168.149.21.31 - - [14/Apr/2025 04:58:22] "POST /responses HTTP/1.1" 200 -
+168.149.21.31 - - [14/Apr/2025 04:58:23] "GET /responses?type=solo_win_responses HTTP/1.1" 200 -
+168.149.21.31 - - [14/Apr/2025 04:58:34] "POST /responses HTTP/1.1" 200 -
+168.149.21.31 - - [14/Apr/2025 04:58:34] "GET /responses?type=solo_win_responses HTTP/1.1" 200 -
+168.149.21.31 - - [14/Apr/2025 04:59:52] "POST /responses HTTP/1.1" 200 -
+168.149.21.31 - - [14/Apr/2025 04:59:53] "GET /responses?type=solo_win_responses HTTP/1.1" 200 -
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://128.199.217.221:5000
+Press CTRL+C to quit
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 582-297-071
+168.149.21.31 - - [14/Apr/2025 05:02:10] "GET / HTTP/1.1" 200 -
+168.149.21.31 - - [14/Apr/2025 05:02:12] "GET / HTTP/1.1" 200 -
+ * Detected change in '/root/widuxBot/Panel/app.py', reloading
+ * Restarting with stat

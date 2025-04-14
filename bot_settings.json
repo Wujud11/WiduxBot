@@ -1,18 +1,35 @@
 {
-  "bot_username": "WiduxBot",
-  "access_token": "your_access_token",
-  "channels": ["wujud"],
+  "username": "WiduxBot",
+  "token": "oauth:ji41i7iputpp6g5bvrvjpznidrsai6",
+  "channels": [
+    "wujud"
+  ],
+  "mention_limit": 2,
+  "mention_guard_warn_msg": "ترى ببلعك تايم أوت",
+  "mention_guard_timeout_msg": "القم! أنا حذرتك",
+  "mention_guard_duration": 3,
+  "mention_cooldown": 86400,
+  "mention_daily_cooldown": true,
   "mention_responses": [],
-  "mention_guard_limit": 2,
-  "mention_guard_duration": 86400,
-  "mention_guard_cooldown": 5,
-  "mention_guard_warning_thresh": 2,
-  "mention_guard_warn_msg": "لا تصايح كل شوي، انتبه!",
-  "mention_guard_timeout_msg": "تايم آوت بسيط، عشان تحترم نفسك شوي.",
-  "mention_guard_cooldown_period": 86400,
-  "enable_mention_timeout": true,
-  "special_mention_responses": {
-    "user1": ["رد خاص 1", "رد خاص 2"],
-    "user2": ["رد خاص 3", "رد خاص 4"]
-  }
+  "general_roasts": [
+    "واااااااا\nانقلع",
+    "واااااااا\nانقلع"
+  ],
+  "special_responses": {
+    "Wuj": [
+      "Vgcxc",
+      "Hcf",
+      "Hg"
+    ],
+    "mention_responses": [
+      "اكل تبن انقلع",
+      "تيتني"
+    ]
+  },
+  "solo_win_responses": [],
+  "team_win_responses": [],
+  "group_win_responses": [
+    "Gggvvv",
+    "Bbb"
+  ]
 }

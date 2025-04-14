@@ -1,26 +1,6 @@
 import time
 import random
 
-class MentionGuard:
-    def __init__(self):
-        self.mention_counts = {}       # {user: count}
-        self.timeout_given = {}        # {user: timestamp}
-        self.special_responses = {}    # {user: [custom replies]}
-        self.general_roasts = [        # ردود الطقطقة العامة
-            "وش تبي؟ مشغوووول!",
-            "ترى منشنك قاعد يستهلك طاقتي.",
-            "قلنا لا تمنشنني! كأني فاضي؟",
-            "ترى البوت عنده دوام يا ورع!",
-            "برجع لك بعد سنة إذا خلصت المنشنات اللي قبلك.",
-            "شكلك بتبلع تايم أوت قريب... اسحب."
-        ]
-        self.warning_threshold = 2  # لا يوجد تحذير قبل هذا الرقم
-        self.mention_limit = 3     # عدد المنشنات المسموح بها
-        self.timeout_duration = 3  # مدة التايم أوت (بالثواني)
-        self.cooldown_period = 86400  # فترة التهدئة (يوم كامل)
-        self.warning_message = "ترى ببلعك تايم أوت"
-        self.timeout_message = "القم! أنا حذرتك"
-
         # تم إضافة قائمة المستخدمين الذين تم إلغاء التايم أوت عليهم
         self.no_timeout_users = set()
 
@@ -83,3 +63,4 @@ class MentionGuard:
     # هذه الدالة تقوم بإلغاء التايم أوت بعد انقضاء فترة التهدئة
     def reset_timeout(self, user):
         self.no_timeout_users.add(user)
+from bot.mention_guard import MentionGuard

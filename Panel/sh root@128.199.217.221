@@ -1,0 +1,11 @@
+Unit panel.servicesystemctl.service could not be found.
+Unit status.service could not be found.
+[0;1;32m●[0m panel.service - Widux Control Panel API
+     Loaded: loaded (/etc/systemd/system/panel.service; enabled; vendor preset: enabled)
+     Active: [0;1;32mactive (running)[0m since Sun 2025-04-13 18:51:44 UTC; 41s ago
+   Main PID: 38379 (python3)
+      Tasks: 3 (limit: 1117)
+     Memory: 37.7M
+     CGroup: /system.slice/panel.service
+             ├─38379 /usr/bin/python3 /root/widuxBot/Panel/app.py
+             └─38391 /usr/bin/python3 /root/widuxBot/Panel/app.py

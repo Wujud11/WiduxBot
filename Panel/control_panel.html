@@ -1,65 +1,22 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>لوحة التحكم - الردود والمنشن</title>
+  <title>لوحة تحكم Widux</title>
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      direction: rtl;
-      background-color: #121212;
-      color: #e0e0e0;
-      padding: 30px;
+    body { background-color: #121212; color: #fff; font-family: sans-serif; padding: 20px; }
+    h2 { margin-top: 30px; }
+    .section { background: #1e1e1e; border-radius: 8px; padding: 15px; margin-bottom: 30px; }
+    select, input, textarea, button {
+      width: 100%; padding: 8px; margin: 10px 0; border-radius: 6px;
+      border: none; background: #2b2b2b; color: #fff;
     }
-    h2 {
-      background: #1f1f1f;
-      color: #fff;
-      padding: 15px 20px;
-      border-radius: 8px;
-    }
-    .section {
-      background: #1e1e1e;
-      padding: 25px;
-      margin-top: 25px;
-      border-radius: 10px;
-      box-shadow: 0 0 12px rgba(0,0,0,0.3);
-    }
-    label {
-      font-weight: bold;
-      display: block;
-      margin-top: 15px;
-      color: #ccc;
-    }
-    select, input {
-      width: 100%;
-      padding: 10px;
-      margin-top: 8px;
-      background: #2a2a2a;
-      border: 1px solid #444;
-      border-radius: 6px;
-      color: #eee;
-    }
-    button {
-      background-color: #8b5cf6;
-      color: white;
-      padding: 8px 16px;
-      border: none;
-      border-radius: 6px;
-      margin-top: 10px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #7c3aed;
-    }
+    button { background: #7c3aed; cursor: pointer; }
+    button:hover { background: #5b21b6; }
     ul { list-style: none; padding: 0; }
-    ul li {
-      background: #2c2c2c;
-      margin: 6px 0;
-      padding: 8px 12px;
-      border-radius: 6px;
-      display: flex;
-      justify-content: space-between;
-    }
+    li { margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
+    .del-btn { background: red; padding: 5px 10px; border-radius: 4px; margin-right: 10px; }
+    .edit-btn { background: purple; padding: 5px 10px; border-radius: 4px; margin-right: 10px; }
   </style>
 </head>
 <body>
@@ -67,119 +24,219 @@
 <h2>الردود العامة</h2>
 <div class="section">
   <label>اختر نوع الرد:</label>
-  <select id="responseType" onchange="loadResponses()">
-    <option value="">-- اختر نوع الرد --</option>
-    <option>solo_win_responses</option>
-    <option>group_win_responses</option>
-    <option>team_win_responses</option>
-    <option>streak_responses</option>
-    <option>low_score_responses</option>
-    <option>taunts_negative</option>
-    <option>doom_leader_fail_responses</option>
-    <option>lowest_leader_responses</option>
-    <option>sabotage_victim</option>
-    <option>stolen_points_responses</option>
-    <option>general_roasts</option>
+  <select id="response-type">
+    <option value="solo_win_responses">فوز فردي</option>
+    <option value="team_win_responses">فوز الفريق</option>
+    <option value="team_lose_responses">خسارة الفريق</option>
+    <option value="group_lose_responses">خسارة ضد مجموعة</option>
+    <option value="group_win_responses">فاز ضد مجموعة (تحدي)</option>
+    <option value="streak_responses">ستريك</option>
+    <option value="below_50_responses">أقل من 50</option>
+    <option value="below_zero_responses">أقل من صفر</option>
+    <option value="doomed_leader_responses">فشل القائد دوم</option>
+    <option value="weak_leader_responses">القائد الأضعف</option>
+    <option value="kicked_responses">المطرود</option>
+    <option value="stolen_responses">المسروقة نقاطه</option>
   </select>
+  <textarea id="new-response-box" rows="5" placeholder="أدخل كل رد بسطر"></textarea>
+  <button onclick="replaceResponses()">تحديث الردود</button>
+  <ul id="responses-list"></ul>
+</div>
 
-  <ul id="responsesList"></ul>
+<h2>ردود المنشن العامة</h2>
+<div class="section">
+  <textarea id="mention_responses_box" rows="6"></textarea>
+  <button onclick="updateMentionResponses()">تحديث ردود المنشن</button>
+</div>
 
-  <input type="text" id="newResponse" placeholder="أدخل رد جديد">
-  <button onclick="addResponse()">إضافة الرد</button>
+<h2>ردود الطقطقة العامة</h2>
+<div class="section">
+  <textarea id="general_roasts_box" rows="6"></textarea>
+  <button onclick="updateGeneralRoasts()">تحديث ردود الطقطقة</button>
+</div>
+
+<h2>ردود خاصة لمستخدمين</h2>
+<div class="section">
+  <ul id="special-users-list"></ul>
+  <input type="text" id="special-user-id" placeholder="اسم المستخدم">
+  <textarea id="special-responses-box" rows="5" placeholder="ردود خاصة بسطر لكل رد"></textarea>
+  <button onclick="updateSpecialResponses()">تحديث ردود المستخدم</button>
+  <button onclick="addSpecialUser()">إضافة مستخدم</button>
+  <button onclick="deleteSpecialUser()">حذف مستخدم</button>
 </div>
 
 <h2>إعدادات المنشن</h2>
-<div class="section" id="mentionSettings"></div>
-
-<h2>ردود خاصة للمستخدمين</h2>
 <div class="section">
-  <textarea id="specialResponses" rows="10" placeholder="special_responses بصيغة JSON..."></textarea>
-  <button onclick="updateSpecial()">تحديث الردود الخاصة</button>
+  <label>عدد المنشنات المسموحة:</label>
+  <input type="number" id="mention_limit">
+  <label>رسالة التحذير:</label>
+  <input type="text" id="mention_guard_warn_msg">
+  <label>رسالة التايم أوت:</label>
+  <input type="text" id="mention_guard_timeout_msg">
+  <label>مدة التايم أوت بالثواني:</label>
+  <input type="number" id="mention_guard_duration">
+  <label>مدة التهدئة بعد التايم أوت:</label>
+  <input type="number" id="mention_cooldown">
+  <label>تايم أوت مرة واحدة باليوم؟</label>
+  <input type="checkbox" id="mention_daily_cooldown">
+  <button onclick="updateMentionSettings()">تحديث الإعدادات</button>
 </div>
 
 <script>
-const api = "http://localhost:5000";
+const fetchJson = url => fetch(url).then(r => r.json());
 
-// === ردود عامة ===
-function loadResponses() {
-  const type = document.getElementById("responseType").value;
-  fetch(`${api}/responses?type=${type}`)
-    .then(res => res.json())
-    .then(data => {
-      const list = document.getElementById("responsesList");
-      list.innerHTML = "";
-      data.forEach(reply => {
-        const li = document.createElement("li");
-        li.innerHTML = `${reply} <button onclick="deleteResponse('${type}', '${reply}')">حذف</button>`;
-        list.appendChild(li);
+async function loadResponses() {
+  const type = document.getElementById("response-type").value;
+  const res = await fetch(`/responses?type=${type}`);
+  const data = await res.json();
+  const list = document.getElementById("responses-list");
+  list.innerHTML = "";
+  data.forEach(item => {
+    const li = document.createElement("li");
+    const span = document.createElement("span");
+    span.textContent = item;
+    const btnEdit = document.createElement("button");
+    btnEdit.textContent = "تعديل";
+    btnEdit.className = "edit-btn";
+    btnEdit.onclick = async () => { 
+      document.getElementById("new-response-box").value = item; 
+      document.getElementById("response-type").value = type;
+    };
+    const btnDel = document.createElement("button");
+    btnDel.textContent = "حذف";
+    btnDel.className = "del-btn";
+    btnDel.onclick = async () => {
+      await fetch("/responses", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, response: item })
       });
-    });
-}
-
-function addResponse() {
-  const type = document.getElementById("responseType").value;
-  const value = document.getElementById("newResponse").value;
-  fetch(`${api}/responses`, {
-    method: "POST",
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({type: type, response: value})
-  }).then(loadResponses);
-}
-
-function deleteResponse(type, value) {
-  fetch(`${api}/responses`, {
-    method: "DELETE",
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({type: type, response: value})
-  }).then(loadResponses);
-}
-
-// === إعدادات المنشن ===
-function loadMentionSettings() {
-  fetch(`${api}/mention-settings`)
-    .then(res => res.json())
-    .then(data => {
-      const div = document.getElementById("mentionSettings");
-      div.innerHTML = "";
-      Object.entries(data).forEach(([key, val]) => {
-        div.innerHTML += `<label>${key}</label><input onchange="updateMention('${key}', this.value)" value="${val}">`;
-      });
-    });
-}
-
-function updateMention(key, value) {
-  fetch(`${api}/mention-settings`, {
-    method: "PUT",
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({[key]: isNaN(value) ? value : Number(value)})
+      loadResponses();
+    };
+    li.appendChild(span);
+    li.appendChild(btnEdit);
+    li.appendChild(btnDel);
+    list.appendChild(li);
   });
 }
 
-// === الردود الخاصة ===
-function loadSpecial() {
-  fetch(`${api}/special-responses`)
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("specialResponses").value = JSON.stringify(data, null, 2);
+async function replaceResponses() {
+  const type = document.getElementById("response-type").value;
+  const lines = document.getElementById("new-response-box").value.split("\n").map(r => r.trim()).filter(Boolean);
+  await fetch(`/responses`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type, response: "" }) });
+  for (const r of lines) {
+    await fetch(`/responses`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, response: r })
     });
-}
-
-function updateSpecial() {
-  const raw = document.getElementById("specialResponses").value;
-  try {
-    const parsed = JSON.parse(raw);
-    fetch(`${api}/special-responses`, {
-      method: "PUT",
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(parsed)
-    });
-  } catch (err) {
-    alert("الردود الخاصة لازم تكون بصيغة JSON صحيحة!");
   }
+  loadResponses();
 }
 
-loadMentionSettings();
-loadSpecial();
+async function updateMentionResponses() {
+  const responses = document.getElementById("mention_responses_box").value.split("\n").map(r => r.trim()).filter(Boolean);
+  const data = await fetchJson("/special-responses");
+  data.mention_responses = responses;
+  await fetch("/special-responses", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+  alert("تم التحديث");
+}
+
+async function updateGeneralRoasts() {
+  const responses = document.getElementById("general_roasts_box").value.split("\n").map(r => r.trim()).filter(Boolean);
+  await fetch(`/responses`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "general_roasts", response: "" }) });
+  for (const r of responses) {
+    await fetch(`/responses`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "general_roasts", response: r })
+    });
+  }
+  alert("تم التحديث");
+}
+
+async function updateSpecialResponses() {
+  const user = document.getElementById("special-user-id").value.trim();
+  const responses = document.getElementById("special-responses-box").value.split("\n").map(r => r.trim()).filter(Boolean);
+  const data = await fetchJson("/special-responses");
+  data[user] = responses;
+  await fetch("/special-responses", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+  alert("تم التحديث");
+  loadSpecialUsers();
+}
+
+async function addSpecialUser() {
+  const user = document.getElementById("special-user-id").value.trim();
+  if (!user) {
+    alert("الرجاء إدخال اسم المستخدم");
+    return;
+  }
+  const responses = document.getElementById("special-responses-box").value.split("\n").map(r => r.trim()).filter(Boolean);
+  const data = await fetchJson("/special-responses");
+  data[user] = responses;
+  await fetch("/special-responses", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+  alert("تم إضافة المستخدم بنجاح");
+  loadSpecialUsers();
+}
+
+async function deleteSpecialUser() {
+  const user = document.getElementById("special-user-id").value.trim();
+  if (!user) {
+    alert("الرجاء إدخال اسم المستخدم");
+    return;
+  }
+  const data = await fetchJson("/special-responses");
+  delete data[user];
+  await fetch("/special-responses", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+  alert("تم حذف المستخدم بنجاح");
+  loadSpecialUsers();
+}
+
+async function updateMentionSettings() {
+  const body = {
+    mention_limit: +document.getElementById("mention_limit").value,
+    mention_guard_warn_msg: document.getElementById("mention_guard_warn_msg").value,
+    mention_guard_timeout_msg: document.getElementById("mention_guard_timeout_msg").value,
+    mention_guard_duration: +document.getElementById("mention_guard_duration").value,
+    mention_cooldown: +document.getElementById("mention_cooldown").value,
+    mention_daily_cooldown: document.getElementById("mention_daily_cooldown").checked,
+  };
+  await fetch("/mention-settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  alert("تم التحديث");
+}
+
+async function loadSpecialUsers() {
+  const data = await fetchJson("/special-responses");
+  const list = document.getElementById("special-users-list");
+  list.innerHTML = "";
+  Object.entries(data).forEach(([user, responses]) => {
+    if (user === "mention_responses") return;
+    const li = document.createElement("li");
+    li.textContent = `${user}: ${responses.length} رد`;
+    li.onclick = () => {
+      document.getElementById("special-user-id").value = user;
+      document.getElementById("special-responses-box").value = responses.join("\n");
+    };
+    list.appendChild(li);
+  });
+}
+
+window.onload = async () => {
+  document.getElementById("response-type").addEventListener("change", loadResponses);
+  loadResponses();
+  const mention = await fetchJson("/mention-settings");
+  document.getElementById("mention_limit").value = mention.mention_limit;
+  document.getElementById("mention_guard_warn_msg").value = mention.mention_guard_warn_msg;
+  document.getElementById("mention_guard_timeout_msg").value = mention.mention_guard_timeout_msg;
+  document.getElementById("mention_guard_duration").value = mention.mention_guard_duration;
+  document.getElementById("mention_cooldown").value = mention.mention_cooldown;
+  document.getElementById("mention_daily_cooldown").checked = mention.mention_daily_cooldown;
+  const data = await fetchJson("/special-responses");
+  document.getElementById("mention_responses_box").value = (data.mention_responses || []).join("\n");
+  const groasts = await fetchJson("/responses?type=general_roasts");
+  document.getElementById("general_roasts_box").value = groasts.join("\n");
+  loadSpecialUsers();
+};
 </script>
 </body>
 </html>
