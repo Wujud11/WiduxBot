@@ -2,11 +2,12 @@ import asyncio
 import random
 from collections import defaultdict
 
-from bot.questions.normal import NormalQuestion, TeamNormalQuestion
+from bot.questions.normal import TeamNormalQuestion
 from bot.questions.golden import GoldenQuestion
 from bot.questions.sabotage import SabotageQuestion
-from bot.flow.game_flow_manager import start_game
-from bot.question_manager import QuestionManager
+from bot.questions.doom import DoomQuestion
+from bot.questions.fate import TestOfFate
+from bot.questions.steal_or_boost import ChallengeStealOrBoostQuestion
 
 class WiduxEngine:
     def __init__(self, bot):
@@ -21,7 +22,10 @@ class WiduxEngine:
         self.blue_leader = None
         self.red_leader = None
         self.main_player = None
-        self.q_manager = QuestionManager()
+        self.questions = []
+        self.current_index = 0
+        self.selected_game_mode = None
+        self.waiting_for_normal_count = False
 
     async def handle_message(self, message):
         content = message.content.strip()
@@ -31,22 +35,32 @@ class WiduxEngine:
             await message.channel.send("هلا والله! إذا بتلعب لحالك اكتب سولو، إذا ضد الكل اكتب تحدي، وإذا مع ربعك اكتب تيم.")
             return
 
-        if content in ["سولو", "تحدي", "تيم"] and not self.game_mode:
-            self.game_mode = content
+        if content in ["سولو", "تحدي", "تيم"] and not self.game_mode and not self.waiting_for_normal_count:
+            self.selected_game_mode = content
             self.main_player = sender
+            self.waiting_for_normal_count = True
+            await message.channel.send("حدد عدد الأسئلة العادية من 5 إلى 10.")
+            return
 
-            if content == "سولو":
-                await message.channel.send("عندك 10 ثواني لكل سؤال، جاهز؟")
-                await self.start_full_game(message.channel)
+        if self.waiting_for_normal_count and content.isdigit():
+            count = int(content)
+            if 5 <= count <= 10:
+                self.waiting_for_normal_count = False
+                self.game_mode = self.selected_game_mode
 
-            elif content == "تحدي":
-                await message.channel.send("اللي بيلعب يكتب 'R' للتسجيل معكم 15 ثانية!")
-                await self.register_challenge_players(message.channel)
+                if self.game_mode == "سولو":
+                    await message.channel.send("جاري بدء اللعبة...")
+                    await self.start_full_game(message.channel, count)
 
-            elif content == "تيم":
-                await message.channel.send("كل واحد يختار فريقه، يكتب 'أزرق' أو 'أحمر' معكم 20 ثانية!")
-                await self.register_team_players(message.channel)
+                elif self.game_mode == "تحدي":
+                    await message.channel.send("اللي بيلعب يكتب 'R' للتسجيل معكم 15 ثانية!")
+                    await self.register_challenge_players(message.channel, count)
 
+                elif self.game_mode == "تيم":
+                    await message.channel.send("كل واحد يختار فريقه، يكتب 'أزرق' أو 'أحمر' معكم 20 ثانية!")
+                    await self.register_team_players(message.channel, count)
+            else:
+                await message.channel.send("الرجاء اختيار رقم بين 5 و10.")
             return
 
         if self.game_mode == "تحدي" and content.upper() == 'R' and sender not in self.players:
@@ -69,24 +83,24 @@ class WiduxEngine:
     def extract_mentions(self, text):
         return [word[1:] for word in text.split() if word.startswith('@')]
 
-    async def register_challenge_players(self, channel):
+    async def register_challenge_players(self, channel, normal_count):
         await asyncio.sleep(15)
         if len(self.players) < 2:
             await self.reset_game(channel, "ما فيه عدد كافي نبدأ فيه التحدي.")
         else:
             await channel.send(f"تم تسجيل اللاعبين: {', '.join(self.players)}")
-            await self.start_full_game(channel)
+            await self.start_full_game(channel, normal_count)
 
-    async def register_team_players(self, channel):
+    async def register_team_players(self, channel, normal_count):
         await asyncio.sleep(20)
         if len(self.blue_team) < 3 or len(self.red_team) < 3:
             await self.reset_game(channel, "لازم ٣ لاعبين على الأقل في كل فريق.")
         else:
             await channel.send(f"الفريق الأزرق: {', '.join(self.blue_team)}")
             await channel.send(f"الفريق الأحمر: {', '.join(self.red_team)}")
-            await self.select_team_leaders(channel)
+            await self.select_team_leaders(channel, normal_count)
 
-    async def select_team_leaders(self, channel):
+    async def select_team_leaders(self, channel, normal_count):
         self.leader_selection = True
         await channel.send("اختاروا الليدر! منشنوه خلال 10 ثواني.")
         await asyncio.sleep(10)
@@ -96,24 +110,59 @@ class WiduxEngine:
 
         await channel.send(f"ليدر الأزرق: {self.blue_leader}")
         await channel.send(f"ليدر الأحمر: {self.red_leader}")
-        await self.start_full_game(channel)
+        await self.start_full_game(channel, normal_count)
 
-    async def start_full_game(self, channel):
-        await start_game(
-            channel=channel,
-            bot=self.bot,
-            game_mode=self.game_mode,
-            teams={"أزرق": self.blue_team, "أحمر": self.red_team},
-            leaders={"أزرق": self.blue_leader, "أحمر": self.red_leader},
-            players=self.players if self.game_mode == "تحدي" else self.blue_team + self.red_team if self.game_mode == "تيم" else [self.main_player],
-            questions_data=self.q_manager.get_questions_by_type("Normal"),
-            golden_question_data=self.q_manager.get_random_question("Golden"),
-            steal_question_data=self.q_manager.get_random_question("Steal"),
-            sabotage_question_data=self.q_manager.get_random_question("Sabotage"),
-            fate_questions_data=self.q_manager.get_questions_by_type("Fate"),
-            doom_question_data=self.q_manager.get_random_question("Doom")
-        )
-        await self.reset_game(channel)
+    async def start_full_game(self, channel, normal_count):
+        self.questions = []
+        self.questions += [{"type": "normal"}] * normal_count
+        self.questions.append({"type": "golden"})
+        self.questions.append({"type": "steal_or_boost"})
+        self.questions.append({"type": "sabotage"})
+        self.questions.append({"type": "fate"})
+        self.questions.append({"type": "doom"})
+
+        self.current_index = 0
+        await channel.send("اللعبة بدأت! استعد للسؤال الأول...")
+        await self.ask_next_question(channel)
+
+    async def ask_next_question(self, channel):
+        if self.current_index >= len(self.questions):
+            await channel.send("انتهت جميع الأسئلة!")
+            return
+
+        q = self.questions[self.current_index]
+        self.current_index += 1
+
+        try:
+            if q["type"] == "doom":
+                qobj = DoomQuestion()
+                await qobj.ask(channel)
+
+            elif q["type"] == "fate":
+                qobj = TestOfFate()
+                await qobj.ask(channel)
+
+            elif q["type"] == "sabotage":
+                qobj = SabotageQuestion()
+                await qobj.ask(channel)
+
+            elif q["type"] == "steal_or_boost":
+                qobj = ChallengeStealOrBoostQuestion()
+                await qobj.ask(channel)
+
+            elif q["type"] == "golden":
+                qobj = GoldenQuestion()
+                await qobj.ask(channel)
+
+            elif q["type"] == "normal":
+                qobj = TeamNormalQuestion()
+                await qobj.ask(channel)
+
+            else:
+                await channel.send(f"نوع السؤال غير معروف: {q['type']}")
+
+        except Exception as e:
+            await channel.send(f"خطأ أثناء تنفيذ السؤال: {str(e)}")
 
     async def reset_game(self, channel=None, notice=None):
         if channel and notice:
@@ -129,3 +178,7 @@ class WiduxEngine:
         self.blue_leader = None
         self.red_leader = None
         self.main_player = None
+        self.questions = []
+        self.current_index = 0
+        self.selected_game_mode = None
+        self.waiting_for_normal_count = False
