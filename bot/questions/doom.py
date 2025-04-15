@@ -1,5 +1,3 @@
-# bot/questions/doom.py
-
 import asyncio
 from utils.responses import get_response
 from utils.leader_utils import taunt_lowest_leader
@@ -56,7 +54,7 @@ class DoomQuestion:
                 team = "أزرق" if leader in teams["أزرق"] else "أحمر"
                 for player in teams[team]:
                     points[player] = 0
-                msg = get_response("doom_fail", {"leader": leader})
+                msg = get_response("doomed_leader_responses", {"leader": leader})
                 if msg:
                     await channel.send(msg)
 
@@ -96,7 +94,7 @@ class DoomQuestion:
                 await channel.send(f"{winner_leader} جاوب خطأ! فريقه خسر الجولة.")
                 for player in teams[winner_team]:
                     points[player] = 0
-                msg = get_response("doom_fail", {"leader": winner_leader})
+                msg = get_response("doomed_leader_responses", {"leader": winner_leader})
                 if msg:
                     await channel.send(msg)
             else:
@@ -109,14 +107,14 @@ class DoomQuestion:
                     await channel.send(f"{winner_leader} جاوب صح وفريقه تفوق بالنقاط! الفريق الثاني خسر الجولة.")
                     for player in teams[loser_team]:
                         points[player] = 0
-                    msg = get_response("doom_fail", {"leader": loser_leader})
+                    msg = get_response("doomed_leader_responses", {"leader": loser_leader})
                     if msg:
                         await channel.send(msg)
                 else:
                     await channel.send(f"{winner_leader} جاوب صح لكن فريقه أضعف بالنقاط! يخسر الجولة.")
                     for player in teams[winner_team]:
                         points[player] = 0
-                    msg = get_response("doom_fail", {"leader": winner_leader})
+                    msg = get_response("doomed_leader_responses", {"leader": winner_leader})
                     if msg:
                         await channel.send(msg)
 
@@ -139,5 +137,14 @@ async def end_team_game(leaders, teams, points, channel):
     lose_msg = get_response("taunts_lose", {"team": losing_team})
     if lose_msg:
         await channel.send(lose_msg)
+
+    # التحقق إذا القائد أضعف نقاط
+    for team, leader in leaders.items():
+        team_points = {p: points.get(p, 0) for p in teams[team]}
+        if leader in team_points:
+            if team_points[leader] == min(team_points.values()):
+                msg = get_response("weak_leader_responses", {"leader": leader})
+                if msg:
+                    await channel.send(msg)
 
     await taunt_lowest_leader(leaders, points, channel)
