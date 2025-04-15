@@ -1,5 +1,6 @@
 import json
 import os
+import requests
 
 SETTINGS_FILE = "bot_settings.json"
 
@@ -34,6 +35,18 @@ class BotSettings:
         self.save_settings()
 
     def get_setting(self, key):
+        # ✅ الردود تيجي من API
+        if key == "custom_responses":
+            try:
+                res = requests.get("http://localhost:9001/api/responses")
+                if res.status_code == 200:
+                    return res.json()
+                else:
+                    print("فشل في تحميل الردود من API")
+            except Exception as e:
+                print(f"خطأ في الاتصال بـ API للردود: {e}")
+            return self.settings.get("custom_responses", [])
+
         return self.settings.get(key)
 
     def get_all_settings(self):
