@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -112,7 +113,7 @@
 function showTab(id) {
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
   document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
-  document.querySelector(".tab[onclick="showTab('" + id + "')"]").classList.add("active");
+  document.querySelector(`.tab[onclick="showTab('${id}')"]`).classList.add("active");
   document.getElementById(id).classList.add("active");
 }
 </script>
