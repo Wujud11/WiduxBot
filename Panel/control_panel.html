@@ -6,7 +6,7 @@
   <style>
     body { background-color: #121212; color: #fff; font-family: sans-serif; padding: 20px; }
     .tabs { display: flex; margin-bottom: 20px; }
-    .tab { background: #2b2b2b; padding: 10px 20px; margin-right: 5px; border-radius: 6px; cursor: pointer; }
+    .tab { background: #2b2b2b; padding: 10px 20px; margin-left: 5px; border-radius: 6px; cursor: pointer; }
     .tab.active { background: #7c3aed; }
     .section { display: none; background: #1e1e1e; border-radius: 8px; padding: 20px; }
     .section.active { display: block; }
@@ -72,13 +72,28 @@
 
 <div id="questions" class="section">
   <h2>إدارة الأسئلة</h2>
+
   <h3>إضافة سؤال جديد</h3>
-  <input type="text" id="question-text" placeholder="أدخل السؤال">
+  <input type="text" id="question-text" placeholder="نص السؤال">
   <input type="text" id="correct-answer" placeholder="الإجابة الصحيحة">
-  <input type="text" id="alt-answers" placeholder="الإجابات البديلة (مفصولة بفواصل)">
+  <input type="text" id="alt-answers" placeholder="إجابات بديلة (افصل بينها بفواصل)">
+  
+  <label>نوع السؤال:</label>
+  <select id="question-type">
+    <option value="Normal">عادي</option>
+    <option value="Golden">ذهبي</option>
+    <option value="Steal">زرف أو زود</option>
+    <option value="Sabotage">تخريب</option>
+    <option value="Fate">اختبار المصير</option>
+    <option value="Doom">دوم</option>
+  </select>
+
+  <label>التصنيف:</label>
+  <input type="text" id="question-category" placeholder="مثلاً: معلومات عامة">
+  
   <button onclick="addQuestion()">إضافة السؤال</button>
 
-  <h3>رفع أسئلة من ملف JSON</h3>
+  <h3>رفع ملف JSON</h3>
   <input type="file" id="questions-file">
   <button onclick="uploadQuestions()">رفع الأسئلة</button>
 
@@ -90,7 +105,7 @@
   <h2>ردود خاصة لمستخدمين</h2>
   <ul id="special-users-list"></ul>
   <input type="text" id="special-user-id" placeholder="اسم المستخدم">
-  <textarea id="special-responses-box" rows="5" placeholder="ردود خاصة بسطر لكل رد"></textarea>
+  <textarea id="special-responses-box" rows="5" placeholder="ردود خاصة (كل رد بسطر)"></textarea>
   <button onclick="updateSpecialResponses()">تحديث ردود المستخدم</button>
   <button onclick="addSpecialUser()">إضافة مستخدم</button>
   <button onclick="deleteSpecialUser()">حذف مستخدم</button>
