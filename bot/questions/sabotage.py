@@ -59,7 +59,7 @@ class SabotageQuestion:
             await channel.send("ما تقدر تطرد القائد أو ما تم تحديد ضحية بشكل صحيح.")
             return points
 
-        await channel.send(f"{winner} جاوب أول! {target} تم طرده من اللعبة.")
+        await channel.send(f"{target} تم طرده من اللعبة.")
 
         msg = get_response("kicked_responses", {"player": target})
         if msg:
