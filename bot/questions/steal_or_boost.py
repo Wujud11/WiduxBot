@@ -80,7 +80,7 @@ class StealOrBoostTeamQuestion:
         for p in teams[user_team]:
             points[p] = points.get(p, 0) + stolen // len(teams[user_team])
 
-        msg = get_response("steal_victim", {"player": target_player})
+        msg = get_response("stolen_responses", {"player": target_player})
         if msg:
             await channel.send(msg)
 
@@ -145,7 +145,7 @@ class ChallengeStealOrBoostQuestion:
         points[target] = 0
         points[correct_user] = points.get(correct_user, 0) + stolen
 
-        msg = get_response("steal_victim", {"player": target})
+        msg = get_response("stolen_responses", {"player": target})
         if msg:
             await channel.send(msg)
 
