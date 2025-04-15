@@ -61,8 +61,7 @@ class SabotageQuestion:
 
         await channel.send(f"{winner} جاوب أول! {target} تم طرده من اللعبة.")
 
-        # تم التعديل هنا للمفتاح الصحيح
-        msg = get_response("sabotage_victim", {"target": target})
+        msg = get_response("kicked_responses", {"player": target})
         if msg:
             await channel.send(msg)
 
