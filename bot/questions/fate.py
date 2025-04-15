@@ -8,7 +8,7 @@ class TestOfFate:
         ]
 
     async def ask(self, channel, bot, players, points):
-        await channel.send("جولة اختبار المصير بدأت! كل سؤال له 10 ثواني، كل إجابة صح +10 وخطأ -5!")
+        await channel.send("جولة Test of Fate بدأت! كل سؤال له 10 ثواني، كل إجابة صح +10 وخطأ -5!")
 
         scores = {player: 0 for player in players}
 
@@ -41,7 +41,7 @@ class TestOfFate:
         # طقطقة للي نقاطهم تحت الصفر
         for player in players:
             if points[player] < 0:
-                msg = get_response("taunts_negative", {"player": player})
+                msg = get_response("below_zero_responses", {"player": player})
                 if msg:
                     await channel.send(msg)
 
