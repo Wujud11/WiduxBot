@@ -29,7 +29,6 @@
   <div class="tab active" onclick="showTab('settings')">الإعدادات</div>
   <div class="tab" onclick="showTab('responses')">الردود العامة</div>
   <div class="tab" onclick="showTab('questions')">الأسئلة</div>
-  <div class="tab" onclick="showTab('special')">الردود الخاصة</div>
   <div class="tab" onclick="showTab('channels')">القنوات</div>
 </div>
 
@@ -53,27 +52,14 @@
 <div id="responses" class="section">
   <h2>الردود العامة</h2>
   <label>اختر نوع الرد:</label>
-  <select id="response-type">
-    <option value="solo_win_responses">فوز فردي</option>
-    <option value="team_win_responses">فوز الفريق</option>
-    <option value="team_lose_responses">خسارة الفريق</option>
-    <option value="group_lose_responses">خسارة ضد مجموعة</option>
-    <option value="group_win_responses">فاز ضد مجموعة (تحدي)</option>
-    <option value="below_50_responses">أقل من 50</option>
-    <option value="below_zero_responses">أقل من صفر</option>
-    <option value="doomed_leader_responses">فشل القائد دوم</option>
-    <option value="weak_leader_responses">القائد الأضعف</option>
-    <option value="kicked_responses">المطرود</option>
-    <option value="stolen_responses">المسروقة نقاطه</option>
-  </select>
-  <textarea id="new-response-box" rows="5" placeholder="أدخل كل رد بسطر"></textarea>
-  <button onclick="replaceResponses()">تحديث الردود</button>
+  <select id="response-type"></select>
+  <textarea id="new-response-box" rows="3" placeholder="أدخل رد جديد"></textarea>
+  <button onclick="addResponse()">إضافة رد</button>
   <ul id="responses-list"></ul>
 </div>
 
 <div id="questions" class="section">
   <h2>إدارة الأسئلة</h2>
-  <h3>إضافة سؤال جديد</h3>
   <input type="text" id="question-text" placeholder="أدخل السؤال">
   <input type="text" id="correct-answer" placeholder="الإجابة الصحيحة">
   <input type="text" id="alt-answers" placeholder="الإجابات البديلة (مفصولة بفواصل)">
@@ -86,30 +72,14 @@
     <option value="Doom">Doom</option>
   </select>
   <button onclick="addQuestion()">إضافة السؤال</button>
-
-  <h3>رفع أسئلة من ملف JSON</h3>
-  <input type="file" id="questions-file">
-  <button onclick="uploadQuestions()">رفع الأسئلة</button>
-
-  <h3>الأسئلة الحالية</h3>
   <ul id="questions-list"></ul>
 </div>
 
-<div id="special" class="section">
-  <h2>ردود خاصة لمستخدمين</h2>
-  <ul id="special-users-list"></ul>
-  <input type="text" id="special-user-id" placeholder="اسم المستخدم">
-  <textarea id="special-responses-box" rows="5" placeholder="ردود خاصة بسطر لكل رد"></textarea>
-  <button onclick="updateSpecialResponses()">تحديث ردود المستخدم</button>
-  <button onclick="addSpecialUser()">إضافة مستخدم</button>
-  <button onclick="deleteSpecialUser()">حذف مستخدم</button>
-</div>
-
 <div id="channels" class="section">
-  <h2>إدارة القنوات</h2>
-  <input type="text" id="channel-name" placeholder="اسم القناة">
-  <button onclick="addChannel()">إضافة القناة</button>
+  <h2>إعدادات القنوات</h2>
   <ul id="channels-list"></ul>
+  <input type="text" id="new-channel-name" placeholder="اسم القناة الجديدة">
+  <button onclick="addChannel()">إضافة القناة</button>
 </div>
 
 <script>
@@ -120,40 +90,9 @@ function showTab(id) {
   document.getElementById(id).classList.add("active");
 }
 
-function addChannel() {
-  const name = document.getElementById("channel-name").value;
-  fetch("/api/channels", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name })
-  }).then(() => loadChannels());
-}
+// هنا مكان دوال JavaScript لجلب وتحديث الردود والأسئلة والقنوات
+// (هذي تقدر أرسلها لك لو حبيتي تفصلي كل جزء)
 
-function loadChannels() {
-  fetch("/api/channels")
-    .then(res => res.json())
-    .then(data => {
-      const list = document.getElementById("channels-list");
-      list.innerHTML = "";
-      data.forEach(channel => {
-        const li = document.createElement("li");
-        li.textContent = channel;
-        const btn = document.createElement("button");
-        btn.textContent = "حذف";
-        btn.className = "del-btn";
-        btn.onclick = () => deleteChannel(channel);
-        li.appendChild(btn);
-        list.appendChild(li);
-      });
-    });
-}
-
-function deleteChannel(name) {
-  fetch(`/api/channels/${name}`, {
-    method: "DELETE"
-  }).then(() => loadChannels());
-}
 </script>
-
 </body>
 </html>
