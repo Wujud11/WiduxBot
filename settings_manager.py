@@ -1,6 +1,5 @@
 import json
 import os
-import requests
 
 SETTINGS_FILE = "bot_settings.json"
 
@@ -23,7 +22,11 @@ class BotSettings:
                 "mention_guard_cooldown": 5,
                 "mention_guard_warning_thresh": 2,
                 "mention_guard_warn_msg": "لا تصايح كل شوي، انتبه!",
-                "mention_guard_timeout_msg": "تايم آوت بسيط، عشان تحترم نفسك شوي."
+                "mention_guard_timeout_msg": "تايم آوت بسيط، عشان تحترم نفسك شوي.",
+                "custom_responses": {},
+                "channels": [],
+                "questions": [],
+                "special_responses": {}
             }
 
     def save_settings(self):
@@ -35,18 +38,6 @@ class BotSettings:
         self.save_settings()
 
     def get_setting(self, key):
-        # ✅ الردود تيجي من API
-        if key == "custom_responses":
-            try:
-                res = requests.get("http://localhost:9001/api/responses")
-                if res.status_code == 200:
-                    return res.json()
-                else:
-                    print("فشل في تحميل الردود من API")
-            except Exception as e:
-                print(f"خطأ في الاتصال بـ API للردود: {e}")
-            return self.settings.get("custom_responses", [])
-
         return self.settings.get(key)
 
     def get_all_settings(self):
@@ -56,12 +47,13 @@ class BotSettings:
         keys = [
             "bot_username", "access_token", "mention_guard_duration",
             "mention_guard_cooldown", "mention_guard_warning_thresh",
-            "mention_guard_warn_msg", "mention_guard_timeout_msg"
+            "mention_guard_warn_msg", "mention_guard_timeout_msg",
+            "mention_limit", "mention_daily_cooldown"
         ]
         for key in keys:
             value = form_data.get(key)
             if value is not None:
-                if key in ["mention_guard_duration", "mention_guard_cooldown", "mention_guard_warning_thresh"]:
+                if key in ["mention_guard_duration", "mention_guard_cooldown", "mention_guard_warning_thresh", "mention_limit"]:
                     value = int(value)
                 self.update_setting(key, value)
 
@@ -84,7 +76,6 @@ class BotSettings:
         }
 
     def update_channel_settings(self, channel_name, form_data):
-        # تحديث الإعدادات العامة (ما عندنا إعدادات خاصة لكل قناة حالياً)
         self.update_bot_settings(form_data)
 
     def update_custom_responses(self, form_data):
