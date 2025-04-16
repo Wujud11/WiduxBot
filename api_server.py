@@ -28,7 +28,7 @@ class MentionSettings(BaseModel):
     mention_guard_warn_msg: str
     mention_guard_timeout_msg: str
     mention_guard_duration: int
-    mention_guard_cooldown: int  # تم التعديل هنا
+    mention_guard_cooldown: int
     mention_daily_cooldown: bool
 
 @app.post("/api/settings/mention")
@@ -113,6 +113,8 @@ class SpecialUser(BaseModel):
 
 @app.post("/api/special")
 def add_special_user(data: SpecialUser):
+    if not data.user.strip():
+        return {"status": "error", "message": "اسم المستخدم مطلوب"}
     responses = settings.get_setting("special_responses") or {}
     responses[data.user] = data.responses
     settings.update_setting("special_responses", responses)
