@@ -3,6 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import List
 from settings_manager import BotSettings
 
 app = FastAPI()
@@ -45,7 +46,7 @@ def get_all_responses():
     return settings.get_setting("custom_responses") or {}
 
 class ResponsesPayload(BaseModel):
-    responses: list[str]
+    responses: List[str]
 
 @app.post("/api/responses/{key}")
 def update_response(key: str, data: ResponsesPayload):
@@ -64,7 +65,7 @@ def get_questions():
 class Question(BaseModel):
     question: str
     correct_answer: str
-    alt_answers: list[str]
+    alt_answers: List[str]
     category: str
     q_type: str
 
@@ -113,7 +114,7 @@ def get_special():
 
 class SpecialUser(BaseModel):
     user: str
-    responses: list[str]
+    responses: List[str]
 
 @app.post("/api/special")
 def add_special_user(data: SpecialUser):
