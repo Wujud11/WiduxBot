@@ -8,9 +8,13 @@ from settings_manager import BotSettings
 app = FastAPI()
 app.mount("/Panel", StaticFiles(directory="Panel"), name="panel")
 
+# تم تعديل الميدل وير
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
+    allow_origins=["*"],  # اسمح لكل النطاقات، يفضل تغييره لاحقًا
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
 )
 
 settings = BotSettings()
