@@ -1,3 +1,4 @@
-flask
-twitchio
-python-dotenv
+fastapi
+uvicorn
+requests
+pydantic
