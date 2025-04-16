@@ -22,15 +22,13 @@ settings = BotSettings()
 def root():
     return FileResponse("Panel/control_panel.html")
 
-
 # ---------- إعدادات المنشن ----------
-
 class MentionSettings(BaseModel):
     mention_limit: int
     mention_guard_warn_msg: str
     mention_guard_timeout_msg: str
     mention_guard_duration: int
-    mention_cooldown: int
+    mention_guard_cooldown: int  # تم التعديل هنا
     mention_daily_cooldown: bool
 
 @app.post("/api/settings/mention")
@@ -38,12 +36,15 @@ def update_mention_settings(data: MentionSettings):
     settings.update_bot_settings(data.dict())
     return {"status": "updated"}
 
-
 # ---------- الردود العامة ----------
-
 @app.get("/api/responses")
 def get_all_responses():
     return settings.get_setting("custom_responses") or {}
+
+@app.get("/api/responses/{key}")
+def get_response(key: str):
+    responses = settings.get_setting("custom_responses") or {}
+    return responses.get(key, [])
 
 class ResponsesPayload(BaseModel):
     responses: List[str]
@@ -55,9 +56,7 @@ def update_response(key: str, data: ResponsesPayload):
     settings.update_setting("custom_responses", responses)
     return {"status": "updated"}
 
-
 # ---------- الأسئلة ----------
-
 @app.get("/api/questions")
 def get_questions():
     return settings.get_setting("questions") or []
@@ -85,9 +84,7 @@ def delete_question(qid: int):
     settings.update_setting("questions", all_qs)
     return {"status": "deleted"}
 
-
 # ---------- القنوات ----------
-
 @app.get("/api/channels")
 def get_channels():
     return settings.get_setting("channels") or []
@@ -105,9 +102,7 @@ def delete_channel(name: str):
     settings.delete_channel(name)
     return {"status": "deleted"}
 
-
 # ---------- الردود الخاصة ----------
-
 @app.get("/api/special")
 def get_special():
     return settings.get_setting("special_responses") or {}
