@@ -1,4 +1,4 @@
-// تشغيل التبويبات
+// تبويبات
 function showTab(id) {
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
   document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
@@ -6,18 +6,19 @@ function showTab(id) {
   document.getElementById(id).classList.add("active");
 }
 
-// إعدادات المنشن
+// ========== إعدادات المنشن ==========
 function updateMentionSettings() {
   const data = {
     mention_limit: parseInt(document.getElementById("mention_limit").value) || 0,
     mention_guard_warn_msg: document.getElementById("mention_guard_warn_msg").value,
     mention_guard_timeout_msg: document.getElementById("mention_guard_timeout_msg").value,
     mention_guard_duration: parseInt(document.getElementById("mention_guard_duration").value) || 0,
-    mention_cooldown: parseInt(document.getElementById("mention_cooldown").value) || 0,
+    mention_guard_cooldown: parseInt(document.getElementById("mention_guard_cooldown").value) || 0,
     mention_daily_cooldown: document.getElementById("mention_daily_cooldown").checked
   };
   fetch("/api/settings/mention", {
-    method: "POST", headers: { "Content-Type": "application/json" },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   })
     .then(res => res.json())
@@ -25,20 +26,109 @@ function updateMentionSettings() {
     .catch(err => console.error("خطأ:", err));
 }
 
-// الردود العامة
-function replaceResponses() {
+// ========== الردود العامة ==========
+let currentResponses = [];
+
+function loadResponses() {
   const type = document.getElementById("response-type").value;
-  const lines = document.getElementById("new-response-box").value.split("\n").filter(Boolean);
-  fetch(`/api/responses/${type}`, {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ responses: lines }),
-  })
+  fetch(`/api/responses/${type}`)
     .then(res => res.json())
-    .then(() => alert("تم تحديث الردود!"))
-    .catch(err => console.error("خطأ:", err));
+    .then(data => {
+      currentResponses = data;
+      const list = document.getElementById("responses-list");
+      list.innerHTML = "";
+      data.forEach((response, index) => {
+        const li = document.createElement("li");
+
+        const span = document.createElement("span");
+        span.textContent = response;
+        span.style.flex = "1";
+
+        const btnGroup = document.createElement("div");
+        btnGroup.className = "btn-group";
+
+        const edit = document.createElement("button");
+        edit.textContent = "تعديل";
+        edit.className = "edit-btn";
+        edit.onclick = () => editResponse(index, response);
+
+        const del = document.createElement("button");
+        del.textContent = "حذف";
+        del.className = "del-btn";
+        del.onclick = () => deleteResponse(index);
+
+        btnGroup.appendChild(edit);
+        btnGroup.appendChild(del);
+        li.appendChild(span);
+        li.appendChild(btnGroup);
+        list.appendChild(li);
+      });
+    })
+    .catch(err => console.error("خطأ تحميل الردود:", err));
 }
 
-// الأسئلة
+function addResponse() {
+  const input = document.getElementById("new-response-input");
+  const value = input.value.trim();
+  if (!value) return;
+
+  const type = document.getElementById("response-type").value;
+  const updated = [...currentResponses, value];
+
+  fetch(`/api/responses/${type}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ responses: updated }),
+  })
+    .then(() => {
+      input.value = "";
+      loadResponses();
+    })
+    .catch(err => console.error("خطأ إضافة رد:", err));
+}
+
+function deleteResponse(index) {
+  const type = document.getElementById("response-type").value;
+  const updated = [...currentResponses];
+  updated.splice(index, 1);
+
+  fetch(`/api/responses/${type}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ responses: updated }),
+  })
+    .then(() => loadResponses())
+    .catch(err => console.error("خطأ حذف رد:", err));
+}
+
+function editResponse(index, oldValue) {
+  const li = document.getElementById("responses-list").children[index];
+  li.innerHTML = "";
+
+  const input = document.createElement("input");
+  input.value = oldValue;
+  input.style.flex = "1";
+
+  const save = document.createElement("button");
+  save.textContent = "حفظ";
+  save.className = "save-btn";
+  save.onclick = () => {
+    const type = document.getElementById("response-type").value;
+    currentResponses[index] = input.value.trim();
+    fetch(`/api/responses/${type}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ responses: currentResponses }),
+    })
+      .then(() => loadResponses())
+      .catch(err => console.error("خطأ الحفظ:", err));
+  };
+
+  li.appendChild(input);
+  li.appendChild(save);
+}
+
+// ========== الأسئلة ==========
 function addQuestion() {
   const question = document.getElementById("question-text").value;
   const correct = document.getElementById("correct-answer").value;
@@ -46,9 +136,7 @@ function addQuestion() {
   const category = document.getElementById("question-category").value;
   const type = document.getElementById("question-type").value;
 
-  const payload = {
-    question, correct_answer: correct, alt_answers: alts, category, q_type: type,
-  };
+  const payload = { question, correct_answer: correct, alt_answers: alts, category, q_type: type };
 
   fetch("/api/questions", {
     method: "POST", headers: { "Content-Type": "application/json" },
@@ -91,7 +179,7 @@ function loadQuestions() {
     .catch(err => console.error("فشل تحميل الأسئلة:", err));
 }
 
-// القنوات
+// ========== القنوات ==========
 function addChannel() {
   const name = document.getElementById("channel-name").value;
   fetch("/api/channels", {
@@ -134,7 +222,7 @@ function loadChannels() {
     .catch(err => console.error("فشل تحميل القنوات:", err));
 }
 
-// الردود الخاصة
+// ========== الردود الخاصة ==========
 function addSpecialUser() {
   const user = document.getElementById("special-user-id").value;
   const responses = document.getElementById("special-responses-box").value.split("\n").filter(Boolean);
@@ -161,6 +249,10 @@ function deleteSpecialUser() {
     .catch(err => console.error("خطأ:", err));
 }
 
+function updateSpecialResponses() {
+  addSpecialUser(); // نفس الدالة
+}
+
 function loadSpecials() {
   fetch("/api/special")
     .then(res => res.json())
@@ -176,9 +268,10 @@ function loadSpecials() {
     .catch(err => console.error("فشل تحميل الردود الخاصة:", err));
 }
 
-// تحميل تلقائي عند الفتح
+// ========== تحميل تلقائي ==========
 window.onload = () => {
   loadQuestions();
   loadChannels();
   loadSpecials();
+  loadResponses(); // مهم جداً لتشغيل الردود العامة
 };
