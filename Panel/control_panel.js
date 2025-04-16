@@ -19,7 +19,9 @@ function updateMentionSettings() {
   fetch("/api/settings/mention", {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
-  }).then(() => alert("تم تحديث إعدادات المنشن!"));
+  })
+  .then(() => alert("تم تحديث إعدادات المنشن!"))
+  .catch(err => alert("فشل في تحديث إعدادات المنشن: " + err));
 }
 
 // الردود العامة
@@ -29,16 +31,20 @@ function replaceResponses() {
   fetch(`/api/responses/${type}`, {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ responses: lines }),
-  }).then(() => alert("تم تحديث الردود!"));
+  })
+  .then(() => alert("تم تحديث الردود!"))
+  .catch(err => alert("فشل في تحديث الردود: " + err));
 }
 
 // الأسئلة
 function addQuestion() {
   const question = document.getElementById("question-text").value;
   const correct = document.getElementById("correct-answer").value;
-  const alts = document.getElementById("alt-answers").value.split(",").map(a => a.trim());
+  const alts = document.getElementById("alt-answers").value.split(",").map(a => a.trim()).filter(Boolean);
   const category = document.getElementById("question-category").value;
   const type = document.getElementById("question-type").value;
+
+  if (!question || !correct || !type) return alert("يرجى ملء الحقول المطلوبة.");
 
   const payload = {
     question, correct_answer: correct, alt_answers: alts, category, q_type: type,
@@ -47,10 +53,12 @@ function addQuestion() {
   fetch("/api/questions", {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
-  }).then(() => {
+  })
+  .then(() => {
     alert("تمت إضافة السؤال!");
     loadQuestions();
-  });
+  })
+  .catch(err => alert("فشل في إضافة السؤال: " + err));
 }
 
 function deleteQuestion(id) {
@@ -58,7 +66,8 @@ function deleteQuestion(id) {
     .then(() => {
       alert("تم حذف السؤال!");
       loadQuestions();
-    });
+    })
+    .catch(err => alert("فشل في حذف السؤال: " + err));
 }
 
 function loadQuestions() {
@@ -77,19 +86,23 @@ function loadQuestions() {
         li.appendChild(del);
         list.appendChild(li);
       });
-    });
+    })
+    .catch(err => console.error("فشل في تحميل الأسئلة:", err));
 }
 
 // القنوات
 function addChannel() {
   const name = document.getElementById("channel-name").value;
+  if (!name) return alert("يرجى إدخال اسم القناة.");
   fetch("/api/channels", {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name }),
-  }).then(() => {
+  })
+  .then(() => {
     alert("تمت إضافة القناة!");
     loadChannels();
-  });
+  })
+  .catch(err => alert("فشل في إضافة القناة: " + err));
 }
 
 function deleteChannel(name) {
@@ -97,7 +110,8 @@ function deleteChannel(name) {
     .then(() => {
       alert("تم حذف القناة!");
       loadChannels();
-    });
+    })
+    .catch(err => alert("فشل في حذف القناة: " + err));
 }
 
 function loadChannels() {
@@ -116,29 +130,35 @@ function loadChannels() {
         li.appendChild(del);
         list.appendChild(li);
       });
-    });
+    })
+    .catch(err => console.error("فشل في تحميل القنوات:", err));
 }
 
 // الردود الخاصة
 function addSpecialUser() {
   const user = document.getElementById("special-user-id").value;
   const responses = document.getElementById("special-responses-box").value.split("\n").filter(Boolean);
+  if (!user || responses.length === 0) return alert("يرجى ملء اسم المستخدم والردود.");
   fetch("/api/special", {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ user, responses }),
-  }).then(() => {
+  })
+  .then(() => {
     alert("تمت الإضافة!");
     loadSpecials();
-  });
+  })
+  .catch(err => alert("فشل في الإضافة: " + err));
 }
 
 function deleteSpecialUser() {
   const user = document.getElementById("special-user-id").value;
+  if (!user) return alert("يرجى إدخال اسم المستخدم.");
   fetch(`/api/special/${user}`, { method: "DELETE" })
     .then(() => {
       alert("تم حذف المستخدم!");
       loadSpecials();
-    });
+    })
+    .catch(err => alert("فشل في الحذف: " + err));
 }
 
 function loadSpecials() {
@@ -152,7 +172,8 @@ function loadSpecials() {
         li.textContent = `${user} (${responses.length} رد)`;
         list.appendChild(li);
       });
-    });
+    })
+    .catch(err => console.error("فشل في تحميل الردود الخاصة:", err));
 }
 
 // تحميل تلقائي عند الفتح
