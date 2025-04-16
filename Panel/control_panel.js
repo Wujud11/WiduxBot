@@ -9,19 +9,20 @@ function showTab(id) {
 // إعدادات المنشن
 function updateMentionSettings() {
   const data = {
-    mention_limit: document.getElementById("mention_limit").value,
+    mention_limit: parseInt(document.getElementById("mention_limit").value) || 0,
     mention_guard_warn_msg: document.getElementById("mention_guard_warn_msg").value,
     mention_guard_timeout_msg: document.getElementById("mention_guard_timeout_msg").value,
-    mention_guard_duration: document.getElementById("mention_guard_duration").value,
-    mention_cooldown: document.getElementById("mention_cooldown").value,
-    mention_daily_cooldown: document.getElementById("mention_daily_cooldown").checked,
+    mention_guard_duration: parseInt(document.getElementById("mention_guard_duration").value) || 0,
+    mention_cooldown: parseInt(document.getElementById("mention_cooldown").value) || 0,
+    mention_daily_cooldown: document.getElementById("mention_daily_cooldown").checked
   };
   fetch("/api/settings/mention", {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   })
-  .then(() => alert("تم تحديث إعدادات المنشن!"))
-  .catch(err => alert("فشل في تحديث إعدادات المنشن: " + err));
+    .then(res => res.json())
+    .then(() => alert("تم تحديث إعدادات المنشن!"))
+    .catch(err => console.error("خطأ:", err));
 }
 
 // الردود العامة
@@ -32,19 +33,18 @@ function replaceResponses() {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ responses: lines }),
   })
-  .then(() => alert("تم تحديث الردود!"))
-  .catch(err => alert("فشل في تحديث الردود: " + err));
+    .then(res => res.json())
+    .then(() => alert("تم تحديث الردود!"))
+    .catch(err => console.error("خطأ:", err));
 }
 
 // الأسئلة
 function addQuestion() {
   const question = document.getElementById("question-text").value;
   const correct = document.getElementById("correct-answer").value;
-  const alts = document.getElementById("alt-answers").value.split(",").map(a => a.trim()).filter(Boolean);
+  const alts = document.getElementById("alt-answers").value.split(",").map(a => a.trim());
   const category = document.getElementById("question-category").value;
   const type = document.getElementById("question-type").value;
-
-  if (!question || !correct || !type) return alert("يرجى ملء الحقول المطلوبة.");
 
   const payload = {
     question, correct_answer: correct, alt_answers: alts, category, q_type: type,
@@ -54,11 +54,12 @@ function addQuestion() {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   })
-  .then(() => {
-    alert("تمت إضافة السؤال!");
-    loadQuestions();
-  })
-  .catch(err => alert("فشل في إضافة السؤال: " + err));
+    .then(res => res.json())
+    .then(() => {
+      alert("تمت إضافة السؤال!");
+      loadQuestions();
+    })
+    .catch(err => console.error("خطأ:", err));
 }
 
 function deleteQuestion(id) {
@@ -67,7 +68,7 @@ function deleteQuestion(id) {
       alert("تم حذف السؤال!");
       loadQuestions();
     })
-    .catch(err => alert("فشل في حذف السؤال: " + err));
+    .catch(err => console.error("خطأ:", err));
 }
 
 function loadQuestions() {
@@ -87,22 +88,21 @@ function loadQuestions() {
         list.appendChild(li);
       });
     })
-    .catch(err => console.error("فشل في تحميل الأسئلة:", err));
+    .catch(err => console.error("فشل تحميل الأسئلة:", err));
 }
 
 // القنوات
 function addChannel() {
   const name = document.getElementById("channel-name").value;
-  if (!name) return alert("يرجى إدخال اسم القناة.");
   fetch("/api/channels", {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name }),
   })
-  .then(() => {
-    alert("تمت إضافة القناة!");
-    loadChannels();
-  })
-  .catch(err => alert("فشل في إضافة القناة: " + err));
+    .then(() => {
+      alert("تمت إضافة القناة!");
+      loadChannels();
+    })
+    .catch(err => console.error("خطأ:", err));
 }
 
 function deleteChannel(name) {
@@ -111,7 +111,7 @@ function deleteChannel(name) {
       alert("تم حذف القناة!");
       loadChannels();
     })
-    .catch(err => alert("فشل في حذف القناة: " + err));
+    .catch(err => console.error("خطأ:", err));
 }
 
 function loadChannels() {
@@ -131,34 +131,34 @@ function loadChannels() {
         list.appendChild(li);
       });
     })
-    .catch(err => console.error("فشل في تحميل القنوات:", err));
+    .catch(err => console.error("فشل تحميل القنوات:", err));
 }
 
 // الردود الخاصة
 function addSpecialUser() {
   const user = document.getElementById("special-user-id").value;
   const responses = document.getElementById("special-responses-box").value.split("\n").filter(Boolean);
-  if (!user || responses.length === 0) return alert("يرجى ملء اسم المستخدم والردود.");
   fetch("/api/special", {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ user, responses }),
   })
-  .then(() => {
-    alert("تمت الإضافة!");
-    loadSpecials();
-  })
-  .catch(err => alert("فشل في الإضافة: " + err));
+    .then(() => {
+      alert("تمت الإضافة!");
+      loadSpecials();
+    })
+    .catch(err => console.error("خطأ:", err));
 }
 
 function deleteSpecialUser() {
   const user = document.getElementById("special-user-id").value;
-  if (!user) return alert("يرجى إدخال اسم المستخدم.");
+  if (!user) return alert("أدخل اسم المستخدم أولاً");
+
   fetch(`/api/special/${user}`, { method: "DELETE" })
     .then(() => {
       alert("تم حذف المستخدم!");
       loadSpecials();
     })
-    .catch(err => alert("فشل في الحذف: " + err));
+    .catch(err => console.error("خطأ:", err));
 }
 
 function loadSpecials() {
@@ -173,7 +173,7 @@ function loadSpecials() {
         list.appendChild(li);
       });
     })
-    .catch(err => console.error("فشل في تحميل الردود الخاصة:", err));
+    .catch(err => console.error("فشل تحميل الردود الخاصة:", err));
 }
 
 // تحميل تلقائي عند الفتح
