@@ -36,6 +36,17 @@ def update_mention_settings(data: MentionSettings):
     settings.update_bot_settings(data.dict())
     return {"status": "updated"}
 
+@app.get("/api/settings/mention")
+def get_mention_settings():
+    return {
+        "mention_limit": settings.get_setting("mention_limit") or 0,
+        "mention_guard_warn_msg": settings.get_setting("mention_guard_warn_msg") or "",
+        "mention_guard_timeout_msg": settings.get_setting("mention_guard_timeout_msg") or "",
+        "mention_guard_duration": settings.get_setting("mention_guard_duration") or 0,
+        "mention_guard_cooldown": settings.get_setting("mention_guard_cooldown") or 0,
+        "mention_daily_cooldown": settings.get_setting("mention_daily_cooldown") or False,
+    }
+
 # ---------- الردود العامة ----------
 @app.get("/api/responses")
 def get_all_responses():
@@ -127,3 +138,18 @@ def delete_special_user(user: str):
         del responses[user]
     settings.update_setting("special_responses", responses)
     return {"status": "deleted"}
+
+# ---------- تنظيف الردود التالفة ----------
+@app.post("/api/special/cleanup")
+def cleanup_special_users():
+    responses = settings.get_setting("special_responses") or {}
+    cleaned = {}
+
+    for user, resps in responses.items():
+        if user.strip() and user != "mention_responses":
+            cleaned[user] = resps
+
+    deleted_count = len(responses) - len(cleaned)
+    settings.update_setting("special_responses", cleaned)
+
+    return {"status": "cleaned", "count": deleted_count}
