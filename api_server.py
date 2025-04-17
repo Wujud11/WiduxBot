@@ -3,7 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List
+from typing import List, Dict
 from settings_manager import BotSettings
 
 app = FastAPI()
@@ -47,11 +47,7 @@ def get_mention_settings():
         "mention_daily_cooldown": settings.get_setting("mention_daily_cooldown") or False,
     }
 
-# ---------- الردود العامة ----------
-@app.get("/api/responses")
-def get_all_responses():
-    return settings.get_setting("custom_responses") or {}
-
+# ---------- الردود (لعبة / منشن) ----------
 @app.get("/api/responses/{key}")
 def get_response(key: str):
     responses = settings.get_setting("custom_responses") or {}
@@ -88,30 +84,22 @@ def add_question(data: Question):
     settings.update_setting("questions", all_qs)
     return {"status": "added"}
 
+@app.post("/api/questions/import")
+def import_questions_bulk(data: Dict[str, List[dict]]):
+    imported = data.get("questions", [])
+    current = settings.get_setting("questions") or []
+    for q in imported:
+        q["id"] = len(current) + 1
+        current.append(q)
+    settings.update_setting("questions", current)
+    return {"status": "imported", "count": len(imported)}
+
 @app.delete("/api/questions/{qid}")
 def delete_question(qid: int):
     all_qs = settings.get_setting("questions") or []
     all_qs = [q for q in all_qs if q.get("id") != qid]
     settings.update_setting("questions", all_qs)
     return {"status": "deleted"}
-
-# استيراد الأسئلة من JSON
-class ImportQuestionsPayload(BaseModel):
-    questions: List[Question]
-
-@app.post("/api/questions/import")
-def import_questions(payload: ImportQuestionsPayload):
-    all_qs = settings.get_setting("questions") or []
-    next_id = len(all_qs) + 1
-
-    for q in payload.questions:
-        item = q.dict()
-        item["id"] = next_id
-        all_qs.append(item)
-        next_id += 1
-
-    settings.update_setting("questions", all_qs)
-    return {"status": "imported", "count": len(payload.questions)}
 
 # ---------- القنوات ----------
 @app.get("/api/channels")
@@ -157,17 +145,10 @@ def delete_special_user(user: str):
     settings.update_setting("special_responses", responses)
     return {"status": "deleted"}
 
-# ---------- تنظيف الردود التالفة ----------
 @app.post("/api/special/cleanup")
 def cleanup_special_users():
     responses = settings.get_setting("special_responses") or {}
-    cleaned = {}
-
-    for user, resps in responses.items():
-        if user.strip() and user != "mention_responses":
-            cleaned[user] = resps
-
+    cleaned = {user: resps for user, resps in responses.items() if user.strip() and user != "mention_responses"}
     deleted_count = len(responses) - len(cleaned)
     settings.update_setting("special_responses", cleaned)
-
     return {"status": "cleaned", "count": deleted_count}
