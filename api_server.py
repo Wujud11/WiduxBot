@@ -95,6 +95,24 @@ def delete_question(qid: int):
     settings.update_setting("questions", all_qs)
     return {"status": "deleted"}
 
+# استيراد الأسئلة من JSON
+class ImportQuestionsPayload(BaseModel):
+    questions: List[Question]
+
+@app.post("/api/questions/import")
+def import_questions(payload: ImportQuestionsPayload):
+    all_qs = settings.get_setting("questions") or []
+    next_id = len(all_qs) + 1
+
+    for q in payload.questions:
+        item = q.dict()
+        item["id"] = next_id
+        all_qs.append(item)
+        next_id += 1
+
+    settings.update_setting("questions", all_qs)
+    return {"status": "imported", "count": len(payload.questions)}
+
 # ---------- القنوات ----------
 @app.get("/api/channels")
 def get_channels():
