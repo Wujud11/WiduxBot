@@ -26,6 +26,20 @@ function updateMentionSettings() {
     .catch(err => console.error("خطأ:", err));
 }
 
+function loadMentionSettings() {
+  fetch("/api/settings/mention")
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("mention_limit").value = data.mention_limit || 0;
+      document.getElementById("mention_guard_warn_msg").value = data.mention_guard_warn_msg || "";
+      document.getElementById("mention_guard_timeout_msg").value = data.mention_guard_timeout_msg || "";
+      document.getElementById("mention_guard_duration").value = data.mention_guard_duration || 0;
+      document.getElementById("mention_guard_cooldown").value = data.mention_guard_cooldown || 0;
+      document.getElementById("mention_daily_cooldown").checked = data.mention_daily_cooldown || false;
+    })
+    .catch(err => console.error("فشل تحميل إعدادات المنشن:", err));
+}
+
 // ========== الردود العامة ==========
 let currentResponses = [];
 
@@ -272,8 +286,23 @@ function loadSpecials() {
     .catch(err => console.error("فشل تحميل الردود الخاصة:", err));
 }
 
+function cleanupSpecials() {
+  if (!confirm("هل أنت متأكد من حذف الردود التالفة؟")) return;
+
+  fetch("/api/special/cleanup", {
+    method: "POST",
+  })
+    .then(res => res.json())
+    .then(data => {
+      alert(`تم حذف ${data.count} رد خاص تالف!`);
+      loadSpecials();
+    })
+    .catch(err => console.error("خطأ التنظيف:", err));
+}
+
 // ========== تحميل تلقائي ==========
 window.onload = () => {
+  loadMentionSettings();
   loadQuestions();
   loadChannels();
   loadSpecials();
