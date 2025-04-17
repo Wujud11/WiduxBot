@@ -2,12 +2,14 @@ import asyncio
 from twitchio.ext import commands
 from settings_manager import BotSettings
 from bot.mention_guard import MentionGuard
-from engine import WiduxEngine
+from bot.engine import WiduxEngine  # ← صححنا الاستيراد هنا
 
+# تحميل الإعدادات من الملف
 settings = BotSettings()
 bot_username = settings.get_setting("bot_username")
 access_token = settings.get_setting("access_token")
 
+# تهيئة حماية المنشن
 mention_guard = MentionGuard()
 mention_guard.set_config(
     limit=settings.get_setting("mention_guard_limit"),
@@ -18,6 +20,7 @@ mention_guard.set_config(
     timeout_msg=settings.get_setting("mention_guard_timeout_msg"),
 )
 
+# كلاس البوت
 class WiduxBot(commands.Bot):
     def __init__(self):
         super().__init__(token=access_token, prefix="!", initial_channels=[])
@@ -39,7 +42,10 @@ class WiduxBot(commands.Bot):
             if result["action"] == "warn":
                 await message.channel.send(result["message"])
             elif result["action"] == "timeout":
-                await message.channel.timeout(username, result["duration"], reason="Spam Mention")
+                try:
+                    await message.channel.timeout(username, result["duration"], reason="Spam Mention")
+                except Exception as e:
+                    print(f"فشل إعطاء تايم أوت: {e}")
                 await message.channel.send(result["message"])
             elif result["action"] == "roast":
                 await message.channel.send(result["message"])
@@ -69,6 +75,7 @@ class WiduxBot(commands.Bot):
 
             await asyncio.sleep(30)
 
+# تشغيل البوت
 if __name__ == "__main__":
     bot = WiduxBot()
     bot.run()
