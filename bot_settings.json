@@ -8,19 +8,30 @@
   "mention_guard_warn_msg": "ترى ببلعك تايم أوت",
   "mention_guard_timeout_msg": "القم! أنا حذرتك",
   "mention_guard_duration": 3,
-  "mention_cooldown": 86400,
+  "mention_guard_cooldown": 86400,
   "mention_daily_cooldown": true,
-  "mention_responses": [],
+
+  "mention_responses": [
+    "اكل تبن انقلع",
+    "تيتني"
+  ],
+  
   "general_roasts": [
     "واااااااا\nانقلع",
     "واااااااا\nانقلع"
   ],
+
   "special_responses": {
-    "mention_responses": [
-      "اكل تبن انقلع",
-      "تيتني"
+    "wujud": [
+      "وش تبي حبيبي؟",
+      "ما أقدر أقول لا لك"
+    ],
+    "ziad": [
+      "كفو والله!",
+      "ذا ليدرنا المدلل"
     ]
   },
+
   "solo_win_responses": [],
   "team_win_responses": [],
   "group_win_responses": [
