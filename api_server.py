@@ -119,14 +119,21 @@ def add_single_question(item: QuestionItem):
     return {"status": "single question added"}
 
 @app.post("/api/questions/bulk")
-async def add_bulk_questions(file: UploadFile = File(...)):
+def add_bulk_questions(questions: List[QuestionItem]):
+    stored = settings.get_setting("questions") or []
+    stored.extend([q.dict() for q in questions])
+    settings.update_setting("questions", stored)
+    return {"status": "bulk questions added"}
+
+@app.post("/api/import/questions")
+async def import_questions(file: UploadFile = File(...)):
     data = await file.read()
     try:
         new_questions = json.loads(data)
         if isinstance(new_questions, list):
-            questions = settings.get_setting("questions") or []
-            questions.extend(new_questions)
-            settings.update_setting("questions", questions)
+            stored = settings.get_setting("questions") or []
+            stored.extend(new_questions)
+            settings.update_setting("questions", stored)
             return {"status": "bulk questions imported"}
         else:
             return JSONResponse(status_code=400, content={"error": "Invalid JSON format"})
