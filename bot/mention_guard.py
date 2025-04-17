@@ -3,26 +3,18 @@ import random
 
 class MentionGuard:
     def __init__(self):
-        self.mention_counts = {}       # {user: count}
-        self.timeout_given = {}        # {user: timestamp}
-        self.special_responses = {}    # {user: [custom replies]}
-        self.general_roasts = [        # ردود الطقطقة العامة
-            "وش تبي؟ مشغوووول!",
-            "ترى منشنك قاعد يستهلك طاقتي.",
-            "قلنا لا تمنشنني! كأني فاضي؟",
-            "ترى البوت عنده دوام يا ورع!",
-            "برجع لك بعد سنة إذا خلصت المنشنات اللي قبلك.",
-            "شكلك بتبلع تايم أوت قريب... اسحب."
-        ]
-        self.warning_threshold = 2  # لا يوجد تحذير قبل هذا الرقم
-        self.mention_limit = 3     # عدد المنشنات المسموح بها
-        self.timeout_duration = 3  # مدة التايم أوت (بالثواني)
-        self.cooldown_period = 86400  # فترة التهدئة (يوم كامل)
-        self.warning_message = "ترى ببلعك تايم أوت"
-        self.timeout_message = "القم! أنا حذرتك"
+        self.mention_counts = {}
+        self.timeout_given = {}
+        self.special_responses = {}
+        self.general_roasts = []
+        self.no_timeout_users = {}
 
-        # تم إضافة قائمة المستخدمين الذين تم إلغاء التايم أوت عليهم
-        self.no_timeout_users = set()
+        self.mention_limit = 3
+        self.warning_threshold = 2
+        self.timeout_duration = 5
+        self.cooldown_period = 86400
+        self.warning_message = "انتبه، باقي لك شوي وتبلع تايم"
+        self.timeout_message = "لقم تايم أوت بسيط، مزحة من البوت"
 
     def set_config(self, limit, duration, cooldown, warning_thresh, warn_msg, timeout_msg):
         self.mention_limit = limit
@@ -36,50 +28,35 @@ class MentionGuard:
         self.special_responses[username] = responses
 
     def handle_mention(self, user):
-        # إذا كان المستخدم في قائمة المستخدمين الذين تم إلغاء التايم أوت عليهم، يتم الرد مباشرة دون تطبيق التايم أوت
-        if user in self.no_timeout_users:
-            if user in self.special_responses:
-                return {"action": "roast", "message": random.choice(self.special_responses[user])}
-            else:
-                return {"action": "roast", "message": random.choice(self.general_roasts)}
-
         now = time.time()
 
-        # زيادة عدد المرات التي ذكر فيها المستخدم
-        self.mention_counts[user] = self.mention_counts.get(user, 0) + 1
+        # 1. إذا عنده ردود خاصة → دايمًا ياخذ طقطقة خاصة
+        if user in self.special_responses:
+            return {"action": "roast", "message": random.choice(self.special_responses[user])}
 
-        # إذا تجاوز الحد المسموح به للمنشن
-        if self.mention_counts[user] == self.warning_threshold:
+        # 2. إذا أخذ تايم أوت سابقًا → تحقق إذا مر يوم كامل
+        if user in self.no_timeout_users:
+            if now - self.no_timeout_users[user] < self.cooldown_period:
+                return {"action": "roast", "message": random.choice(self.general_roasts)}
+            else:
+                del self.no_timeout_users[user]  # يمسح القديم ويرجع يعد من جديد
+
+        # 3. زيد عدد المنشنات
+        self.mention_counts[user] = self.mention_counts.get(user, 0) + 1
+        count = self.mention_counts[user]
+
+        # 4. إذا وصل للتحذير
+        if count == self.warning_threshold:
             return {"action": "warn", "message": self.warning_message}
 
-        # إذا تجاوز الحد المسموح للمنشن، يتم تطبيق التايم أوت
-        if self.mention_counts[user] >= self.mention_limit:
-            if user not in self.timeout_given:
-                self.timeout_given[user] = now
-                return {
-                    "action": "timeout",
-                    "message": self.timeout_message,
-                    "duration": self.timeout_duration
-                }
+        # 5. إذا تجاوز الحد المسموح به للمنشن
+        if count >= self.mention_limit:
+            self.no_timeout_users[user] = now
+            return {
+                "action": "timeout",
+                "message": self.timeout_message,
+                "duration": self.timeout_duration
+            }
 
-            # إذا كانت المدة التهدئة انتهت، يتم إزالة التايم أوت
-            if now - self.timeout_given[user] >= self.cooldown_period:
-                self.timeout_given[user] = now
-                self.reset_timeout(user)  # إلغاء التايم أوت بعد فترة التهدئة
-                return {
-                    "action": "timeout",
-                    "message": self.timeout_message,
-                    "duration": self.timeout_duration
-                }
-
-            # الرد على المستخدم برسائل عشوائية في حال كان لديه ردود خاصة أو لا
-            if user in self.special_responses:
-                return {"action": "roast", "message": random.choice(self.special_responses[user])}
-            else:
-                return {"action": "roast", "message": random.choice(self.general_roasts)}
-
-        return {"action": "none"}
-
-    # هذه الدالة تقوم بإلغاء التايم أوت بعد انقضاء فترة التهدئة
-    def reset_timeout(self, user):
-        self.no_timeout_users.add(user)
+        # 6. رد عادي قبل لا يوصل حد التايم أوت
+        return {"action": "roast", "message": random.choice(self.general_roasts)}
