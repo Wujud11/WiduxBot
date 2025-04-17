@@ -10,67 +10,47 @@
     .tab.active { background: #7c3aed; }
     .section { display: none; background: #1e1e1e; border-radius: 8px; padding: 20px; }
     .section.active { display: block; }
-
     input, textarea, select, button {
       width: 100%; padding: 8px; margin: 10px 0; border-radius: 6px;
       border: none; background: #2b2b2b; color: #fff;
     }
-
+    textarea { height: 160px; resize: vertical; }
     button { background: #7c3aed; cursor: pointer; }
     button:hover { background: #5b21b6; }
-
-    ul { list-style: none; padding: 0; }
-    li {
-      background: #2b2b2b; margin-bottom: 5px; padding: 10px;
-      border-radius: 6px; display: flex; justify-content: space-between; align-items: center;
-    }
-
-    .btn-group button {
-      margin-left: 10px; padding: 5px 10px; border-radius: 4px; border: none;
-    }
-
-    .del-btn { background: red; color: white; }
-    .edit-btn { background: orange; color: white; }
-    .save-btn { background: green; color: white; }
   </style>
 </head>
 <body>
 
 <div class="tabs">
-  <div class="tab active" onclick="showTab('settings')">الإعدادات</div>
-  <div class="tab" onclick="showTab('responses')">الردود العامة</div>
+  <div class="tab active" onclick="showTab('settings')">إعدادات المنشن</div>
+  <div class="tab" onclick="showTab('game-responses')">ردود اللعبة</div>
+  <div class="tab" onclick="showTab('mention-replies')">ردود المنشن العامة</div>
   <div class="tab" onclick="showTab('questions')">الأسئلة</div>
   <div class="tab" onclick="showTab('channels')">القنوات</div>
   <div class="tab" onclick="showTab('special')">الردود الخاصة</div>
 </div>
 
-<!-- الإعدادات -->
+<!-- إعدادات المنشن -->
 <div id="settings" class="section active">
   <h2>إعدادات المنشن</h2>
-  <label>عدد المنشنات المسموحة:</label>
-  <input type="number" id="mention_limit">
-  <label>رسالة التحذير:</label>
-  <input type="text" id="mention_guard_warn_msg">
-  <label>رسالة التايم أوت:</label>
-  <input type="text" id="mention_guard_timeout_msg">
-  <label>مدة التايم أوت (ثواني):</label>
-  <input type="number" id="mention_guard_duration">
-  <label>مدة التهدئة (ثواني):</label>
-  <input type="number" id="mention_guard_cooldown">
-  <label>تايم آوت مرة باليوم؟</label>
-  <input type="checkbox" id="mention_daily_cooldown">
+  <input type="number" id="mention_limit" placeholder="عدد المنشنات المسموحة">
+  <input type="text" id="mention_guard_warn_msg" placeholder="رسالة التحذير">
+  <input type="text" id="mention_guard_timeout_msg" placeholder="رسالة التايم أوت">
+  <input type="number" id="mention_guard_duration" placeholder="مدة التايم أوت">
+  <input type="number" id="mention_guard_cooldown" placeholder="مدة التهدئة">
+  <label><input type="checkbox" id="mention_daily_cooldown"> تايم آوت مرة باليوم؟</label>
   <button onclick="updateMentionSettings()">تحديث الإعدادات</button>
 </div>
 
-<!-- الردود العامة -->
-<div id="responses" class="section">
-  <h2>الردود العامة</h2>
+<!-- ردود اللعبة -->
+<div id="game-responses" class="section">
+  <h2>ردود اللعبة</h2>
   <select id="response-type" onchange="loadResponses()">
     <option value="solo_win_responses">فوز فردي</option>
     <option value="team_win_responses">فوز الفريق</option>
     <option value="team_lose_responses">خسارة الفريق</option>
-    <option value="group_lose_responses">خسارة ضد مجموعة</option>
     <option value="group_win_responses">فاز ضد مجموعة</option>
+    <option value="group_lose_responses">خسارة ضد مجموعة</option>
     <option value="below_50_responses">أقل من 50</option>
     <option value="below_zero_responses">أقل من صفر</option>
     <option value="doomed_leader_responses">فشل القائد دوم</option>
@@ -78,36 +58,28 @@
     <option value="kicked_responses">المطرود</option>
     <option value="stolen_responses">المسروقة نقاطه</option>
   </select>
+  <textarea id="new-response-textarea" placeholder="أدخل الردود هنا، كل سطر رد جديد"></textarea>
+  <input type="file" id="import-responses-file" accept=".json">
+  <button onclick="updateResponse()">تحديث الردود</button>
+  <button onclick="importResponses()">استيراد من JSON</button>
+</div>
 
-  <ul id="responses-list"></ul>
-
-  <input type="text" id="new-response-input" placeholder="أدخل رد جديد">
-  <button onclick="addResponse()">إضافة الرد</button>
+<!-- ردود المنشن العامة -->
+<div id="mention-replies" class="section">
+  <h2>ردود المنشن العامة</h2>
+  <textarea id="mention-general-responses" placeholder="اكتب ردود المنشن، كل سطر يمثل ردًا"></textarea>
+  <input type="file" id="import-mention-file" accept=".json">
+  <button onclick="updateMentionReplies()">تحديث الردود</button>
+  <button onclick="importMentionReplies()">استيراد من JSON</button>
 </div>
 
 <!-- الأسئلة -->
 <div id="questions" class="section">
-  <h2>إدارة الأسئلة</h2>
-  <input type="text" id="question-text" placeholder="السؤال">
-  <input type="text" id="correct-answer" placeholder="الإجابة الصحيحة">
-  <input type="text" id="alt-answers" placeholder="إجابات بديلة (بفاصلة)">
-  <select id="question-type">
-    <option value="Normal">عادي</option>
-    <option value="Golden">ذهبي</option>
-    <option value="Steal">سرقة</option>
-    <option value="Sabotage">تخريب</option>
-    <option value="Doom">هلاك</option>
-    <option value="Fate">اختبار القدر</option>
-  </select>
-  <input type="text" id="question-category" placeholder="التصنيف (مثال: ثقافة، رياضة)">
-  <button onclick="addQuestion()">إضافة السؤال</button>
-
-  <!-- استيراد ملف JSON للأسئلة -->
-  <h3>استيراد ملف أسئلة</h3>
+  <h2>الأسئلة</h2>
+  <textarea id="bulk-questions" placeholder="السؤال | الإجابة | البدائل | النوع | التصنيف\nكل سطر يمثل سؤال"></textarea>
   <input type="file" id="import-questions-file" accept=".json">
-  <button onclick="importQuestions()">استيراد الأسئلة من الملف</button>
-
-  <ul id="questions-list"></ul>
+  <button onclick="addBulkQuestions()">إضافة الأسئلة</button>
+  <button onclick="importQuestions()">استيراد من JSON</button>
 </div>
 
 <!-- القنوات -->
@@ -120,13 +92,15 @@
 
 <!-- الردود الخاصة -->
 <div id="special" class="section">
-  <h2>ردود خاصة لمستخدمين</h2>
+  <h2>الردود الخاصة</h2>
   <input type="text" id="special-user-id" placeholder="اسم المستخدم">
-  <textarea id="special-responses-box" rows="5" placeholder="ردود خاصة (سطر لكل رد)"></textarea>
+  <textarea id="special-responses-box" placeholder="ردود خاصة (سطر لكل رد)"></textarea>
+  <input type="file" id="import-special-file" accept=".json">
   <button onclick="addSpecialUser()">إضافة المستخدم</button>
   <button onclick="updateSpecialResponses()">تحديث ردود المستخدم</button>
   <button onclick="deleteSpecialUser()">حذف المستخدم</button>
   <button onclick="cleanupSpecials()" style="background: crimson;">تنظيف الردود التالفة</button>
+  <button onclick="importSpecials()">استيراد من JSON</button>
   <ul id="special-users-list"></ul>
 </div>
 
