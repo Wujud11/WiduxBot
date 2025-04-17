@@ -4,13 +4,13 @@ from settings_manager import BotSettings
 from bot.mention_guard import MentionGuard
 from engine import WiduxEngine
 
-# تحميل الإعدادات من الملف
+# تحميل الإعدادات
 settings = BotSettings()
 bot_username = settings.get_setting("bot_username")
 access_token = settings.get_setting("access_token")
 channels = settings.get_setting("channels") or []
 
-# تهيئة حماية المنشن
+# تهيئة الحماية من المنشن
 mention_guard = MentionGuard()
 mention_guard.set_config(
     limit=settings.get_setting("mention_guard_limit"),
@@ -21,7 +21,15 @@ mention_guard.set_config(
     timeout_msg=settings.get_setting("mention_guard_timeout_msg"),
 )
 
-# كلاس البوت الرئيسي
+# تحميل الردود العامة (ردود الطقطقة)
+mention_guard.general_roasts = settings.get_setting("mention_responses") or []
+
+# تحميل الردود الخاصة وتسجيلها
+special = settings.get_setting("special_responses") or {}
+for user, responses in special.items():
+    mention_guard.add_special_responses(user, responses)
+
+# كلاس البوت
 class WiduxBot(commands.Bot):
     def __init__(self):
         super().__init__(
@@ -40,9 +48,10 @@ class WiduxBot(commands.Bot):
 
         username = message.author.name.lower()
 
-        # تعامل مع المنشنات
+        # التحقق من منشن البوت
         if f"@{bot_username.lower()}" in message.content.lower():
             result = mention_guard.handle_mention(username)
+
             if result["action"] == "warn":
                 await message.channel.send(result["message"])
             elif result["action"] == "timeout":
@@ -51,7 +60,7 @@ class WiduxBot(commands.Bot):
             elif result["action"] == "roast":
                 await message.channel.send(result["message"])
 
-        # تم تمرير الرسالة إلى محرك اللعبة WiduxEngine
+        # تمرير الرسالة لمحرك اللعبة
         await self.engine.handle_message(message)
 
 # تشغيل البوت
