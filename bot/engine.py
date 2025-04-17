@@ -8,7 +8,7 @@ from bot.questions.sabotage import SabotageQuestion
 from bot.questions.doom import DoomQuestion
 from bot.questions.fate import TestOfFate
 from bot.questions.steal_or_boost import ChallengeStealOrBoostQuestion
-from utils.response import get_response  # ← هنا صححنا الاستيراد
+from utils.responses import get_response  # ← عدلناه هنا
 
 class WiduxEngine:
     def __init__(self, bot):
@@ -58,7 +58,7 @@ class WiduxEngine:
                     await self.register_challenge_players(message.channel, count)
 
                 elif self.game_mode == "تيم":
-                    await message.channel.send("كل واحد يختار فريقه، اكتب 'أزرق' أو 'أحمر' معكم 20 ثانية!")
+                    await message.channel.send("كل واحد يختار فريقه، يكتب 'أزرق' أو 'أحمر' معكم 20 ثانية!")
                     await self.register_team_players(message.channel, count)
             else:
                 await message.channel.send("الرجاء اختيار رقم بين 5 و10.")
@@ -95,7 +95,7 @@ class WiduxEngine:
     async def register_team_players(self, channel, normal_count):
         await asyncio.sleep(20)
         if len(self.blue_team) < 3 or len(self.red_team) < 3:
-            await self.reset_game(channel, "لازم 3 لاعبين على الأقل في كل فريق.")
+            await self.reset_game(channel, "لازم ٣ لاعبين على الأقل في كل فريق.")
         else:
             await channel.send(f"الفريق الأزرق: {', '.join(self.blue_team)}")
             await channel.send(f"الفريق الأحمر: {', '.join(self.red_team)}")
