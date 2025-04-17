@@ -101,6 +101,12 @@
   </select>
   <input type="text" id="question-category" placeholder="التصنيف (مثال: ثقافة، رياضة)">
   <button onclick="addQuestion()">إضافة السؤال</button>
+
+  <!-- استيراد ملف JSON للأسئلة -->
+  <h3>استيراد ملف أسئلة</h3>
+  <input type="file" id="import-questions-file" accept=".json">
+  <button onclick="importQuestions()">استيراد الأسئلة من الملف</button>
+
   <ul id="questions-list"></ul>
 </div>
 
