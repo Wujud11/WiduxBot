@@ -1,4 +1,4 @@
-// ========== تبويبات ==========
+// ---------------- تبويبات ----------------
 function showTab(id) {
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
   document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
@@ -6,7 +6,7 @@ function showTab(id) {
   document.getElementById(id).classList.add("active");
 }
 
-// ========== إعدادات المنشن ==========
+// ---------------- إعدادات المنشن ----------------
 function updateMentionSettings() {
   const data = {
     mention_limit: parseInt(document.getElementById("mention_limit").value) || 0,
@@ -20,260 +20,265 @@ function updateMentionSettings() {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
-  }).then(() => alert("تم تحديث إعدادات المنشن!"))
-    .catch(err => console.error("خطأ:", err));
+  })
+    .then(() => alert("تم تحديث إعدادات المنشن!"))
+    .catch(err => console.error("خطأ تحديث الإعدادات:", err));
 }
 
-function loadMentionSettings() {
-  fetch("/api/settings/mention")
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("mention_limit").value = data.mention_limit || 0;
-      document.getElementById("mention_guard_warn_msg").value = data.mention_guard_warn_msg || "";
-      document.getElementById("mention_guard_timeout_msg").value = data.mention_guard_timeout_msg || "";
-      document.getElementById("mention_guard_duration").value = data.mention_guard_duration || 0;
-      document.getElementById("mention_guard_cooldown").value = data.mention_guard_cooldown || 0;
-      document.getElementById("mention_daily_cooldown").checked = data.mention_daily_cooldown || false;
-    })
-    .catch(err => console.error("فشل تحميل إعدادات المنشن:", err));
-}
+// ---------------- ردود اللعبة ----------------
+function updateResponse() {
+  const type = document.getElementById("response-type").value;
+  const responses = document.getElementById("new-response-textarea").value
+    .split("\n")
+    .map(x => x.trim())
+    .filter(x => x);
 
-// ========== ردود اللعبة ==========
-function loadGameResponses() {
-  const type = document.getElementById("game-response-type").value;
-  fetch(`/api/responses/${type}`)
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("game-response-textarea").value = data.join("\n");
-    });
-}
-
-function saveGameResponses() {
-  const type = document.getElementById("game-response-type").value;
-  const lines = document.getElementById("game-response-textarea").value.split("\n").filter(Boolean);
   fetch(`/api/responses/${type}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ responses: lines }),
-  }).then(() => alert("تم الحفظ"));
+    body: JSON.stringify({ responses }),
+  })
+    .then(() => alert("تم تحديث الردود بنجاح!"))
+    .catch(err => console.error("خطأ تحديث الردود:", err));
 }
 
-function importGameResponses(event) {
-  const file = event.target.files[0];
-  if (!file) return alert("اختر ملف JSON");
+function importResponses() {
+  const fileInput = document.getElementById("import-responses-file");
+  const file = fileInput.files[0];
+  if (!file) return alert("اختر ملف JSON أولاً.");
+
   const reader = new FileReader();
   reader.onload = function (e) {
+    const content = e.target.result;
     try {
-      const data = JSON.parse(e.target.result);
-      Object.entries(data).forEach(([key, responses]) => {
-        fetch(`/api/responses/${key}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ responses }),
-        });
-      });
-      alert("تم استيراد الردود!");
-    } catch {
-      alert("ملف غير صالح");
-    }
-  };
-  reader.readAsText(file);
-}
-
-// ========== ردود المنشن ==========
-function loadMentionResponses() {
-  fetch("/api/responses/mention_responses")
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("mention-responses-box").value = data.join("\n");
-    });
-}
-
-function saveMentionResponses() {
-  const lines = document.getElementById("mention-responses-box").value.split("\n").filter(Boolean);
-  fetch("/api/responses/mention_responses", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ responses: lines }),
-  }).then(() => alert("تم حفظ ردود المنشن"));
-}
-
-function importMentionResponses(event) {
-  const file = event.target.files[0];
-  if (!file) return alert("اختر ملف");
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    try {
-      const responses = JSON.parse(e.target.result);
-      fetch("/api/responses/mention_responses", {
+      const imported = JSON.parse(content);
+      const type = document.getElementById("response-type").value;
+      fetch(`/api/responses/${type}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ responses }),
-      }).then(() => alert("تم الاستيراد"));
-    } catch {
-      alert("ملف غير صالح");
+        body: JSON.stringify({ responses: imported }),
+      })
+        .then(() => alert("تم استيراد الردود بنجاح!"))
+        .catch(err => console.error("خطأ استيراد الردود:", err));
+    } catch (err) {
+      alert("ملف JSON غير صالح.");
     }
   };
   reader.readAsText(file);
 }
 
-// ========== الردود الخاصة ==========
-function loadSpecials() {
-  fetch("/api/special")
-    .then(res => res.json())
-    .then(data => {
-      const list = document.getElementById("special-users-list");
-      list.innerHTML = "";
-      Object.entries(data).forEach(([user, responses]) => {
-        const li = document.createElement("li");
-        li.textContent = `${user} (${responses.length} رد)`;
-        list.appendChild(li);
-      });
-    });
-}
+// ---------------- ردود المنشن العامة ----------------
+function updateMentionReplies() {
+  const responses = document.getElementById("mention-general-responses").value
+    .split("\n")
+    .map(x => x.trim())
+    .filter(x => x);
 
-function addSpecialUser() {
-  const user = document.getElementById("special-user-id").value.trim();
-  const responses = document.getElementById("special-responses-box").value.split("\n").filter(Boolean);
-  fetch("/api/special", {
+  fetch("/api/mention_responses", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ user, responses }),
-  }).then(() => {
-    alert("تمت الإضافة!");
-    loadSpecials();
+    body: JSON.stringify({ responses }),
+  })
+    .then(() => alert("تم تحديث ردود المنشن العامة!"))
+    .catch(err => console.error("خطأ تحديث ردود المنشن:", err));
+}
+
+function importMentionReplies() {
+  const fileInput = document.getElementById("import-mention-file");
+  const file = fileInput.files[0];
+  if (!file) return alert("اختر ملف JSON أولاً.");
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const content = e.target.result;
+    try {
+      const imported = JSON.parse(content);
+      fetch("/api/mention_responses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ responses: imported }),
+      })
+        .then(() => alert("تم استيراد ردود المنشن العامة!"))
+        .catch(err => console.error("خطأ استيراد المنشن:", err));
+    } catch (err) {
+      alert("ملف JSON غير صالح.");
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ---------------- إدارة الأسئلة ----------------
+function addBulkQuestions() {
+  const raw = document.getElementById("bulk-questions").value;
+  if (!raw.trim()) return;
+
+  const lines = raw.split("\n").map(x => x.trim()).filter(x => x);
+  const questions = lines.map(line => {
+    const [q, correct, alts, qtype, category] = line.split("|").map(x => x.trim());
+    return {
+      question: q,
+      correct_answer: correct,
+      alt_answers: (alts || "").split(",").map(a => a.trim()).filter(a => a),
+      q_type: qtype || "Normal",
+      category: category || "عام"
+    };
   });
-}
 
-function deleteSpecialUser() {
-  const user = document.getElementById("special-user-id").value.trim();
-  fetch(`/api/special/${user}`, { method: "DELETE" })
-    .then(() => {
-      alert("تم الحذف!");
-      loadSpecials();
-    });
-}
-
-function cleanupSpecials() {
-  fetch("/api/special/cleanup", { method: "POST" })
-    .then(res => res.json())
-    .then(data => {
-      alert(`تم تنظيف ${data.count} رد تالف`);
-      loadSpecials();
-    });
-}
-
-// ========== الأسئلة ==========
-function addQuestion() {
-  const question = document.getElementById("question-text").value;
-  const correct = document.getElementById("correct-answer").value;
-  const alts = document.getElementById("alt-answers").value.split(",").map(a => a.trim());
-  const category = document.getElementById("question-category").value;
-  const type = document.getElementById("question-type").value;
-
-  const payload = { question, correct_answer: correct, alt_answers: alts, category, q_type: type };
-
-  fetch("/api/questions", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  }).then(() => {
-    alert("تمت إضافة السؤال!");
-    loadQuestions();
-  });
-}
-
-function deleteQuestion(id) {
-  fetch(`/api/questions/${id}`, { method: "DELETE" })
-    .then(() => loadQuestions());
-}
-
-function loadQuestions() {
-  fetch("/api/questions")
-    .then(res => res.json())
-    .then(data => {
-      const list = document.getElementById("questions-list");
-      list.innerHTML = "";
-      data.forEach(q => {
-        const li = document.createElement("li");
-        li.textContent = `${q.question} (${q.q_type})`;
-        const del = document.createElement("button");
-        del.textContent = "حذف";
-        del.className = "del-btn";
-        del.onclick = () => deleteQuestion(q.id);
-        li.appendChild(del);
-        list.appendChild(li);
-      });
-    });
+  fetch("/api/questions/bulk", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ questions }),
+  })
+    .then(() => alert("تمت إضافة الأسئلة بنجاح!"))
+    .catch(err => console.error("خطأ إضافة الأسئلة:", err));
 }
 
 function importQuestions() {
-  const file = document.getElementById("import-questions-file").files[0];
+  const fileInput = document.getElementById("import-questions-file");
+  const file = fileInput.files[0];
+  if (!file) return alert("اختر ملف JSON أولاً.");
+
   const reader = new FileReader();
   reader.onload = function (e) {
+    const content = e.target.result;
     try {
-      const questions = JSON.parse(e.target.result);
-      questions.forEach(q => {
-        fetch("/api/questions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(q),
-        });
-      });
-      alert("تم استيراد الأسئلة!");
-      loadQuestions();
-    } catch {
-      alert("ملف JSON غير صالح");
+      const questions = JSON.parse(content);
+      fetch("/api/questions/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ questions }),
+      })
+        .then(() => alert("تم استيراد الأسئلة بنجاح!"))
+        .catch(err => console.error("خطأ استيراد الأسئلة:", err));
+    } catch (err) {
+      alert("ملف JSON غير صالح.");
     }
   };
   reader.readAsText(file);
 }
 
-// ========== القنوات ==========
-function loadChannels() {
-  fetch("/api/channels")
-    .then(res => res.json())
-    .then(data => {
-      const list = document.getElementById("channels-list");
-      list.innerHTML = "";
-      data.forEach(ch => {
-        const li = document.createElement("li");
-        li.textContent = ch;
-        const del = document.createElement("button");
-        del.textContent = "حذف";
-        del.className = "del-btn";
-        del.onclick = () => deleteChannel(ch);
-        li.appendChild(del);
-        list.appendChild(li);
-      });
-    });
-}
-
+// ---------------- إدارة القنوات ----------------
 function addChannel() {
-  const name = document.getElementById("channel-name").value;
+  const name = document.getElementById("channel-name").value.trim();
+  if (!name) return;
+
   fetch("/api/channels", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name }),
-  }).then(() => {
-    alert("تمت الإضافة!");
-    loadChannels();
-  });
+  })
+    .then(() => {
+      alert("تمت إضافة القناة!");
+      loadChannels();
+    })
+    .catch(err => console.error("خطأ إضافة القناة:", err));
 }
 
-function deleteChannel(name) {
-  fetch(`/api/channels/${name}`, { method: "DELETE" })
-    .then(() => {
-      alert("تم الحذف!");
-      loadChannels();
+function loadChannels() {
+  fetch("/api/channels")
+    .then(res => res.json())
+    .then(channels => {
+      const ul = document.getElementById("channels-list");
+      ul.innerHTML = "";
+      channels.forEach(ch => {
+        const li = document.createElement("li");
+        li.textContent = ch;
+        ul.appendChild(li);
+      });
     });
 }
 
-// ========== تحميل تلقائي ==========
+// ---------------- إدارة الردود الخاصة ----------------
+function addSpecialUser() {
+  const user = document.getElementById("special-user-id").value.trim();
+  const responses = document.getElementById("special-responses-box").value
+    .split("\n")
+    .map(x => x.trim())
+    .filter(x => x);
+
+  if (!user || !responses.length) return alert("الرجاء تعبئة اسم المستخدم والردود");
+
+  fetch("/api/special", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ user, responses }),
+  })
+    .then(() => {
+      alert("تمت إضافة المستخدم!");
+      loadSpecials();
+    })
+    .catch(err => console.error("خطأ إضافة خاص:", err));
+}
+
+function updateSpecialResponses() {
+  addSpecialUser(); // نفس دالة الإضافة تحدث الردود
+}
+
+function deleteSpecialUser() {
+  const user = document.getElementById("special-user-id").value.trim();
+  if (!user) return;
+
+  fetch(`/api/special/${user}`, {
+    method: "DELETE",
+  })
+    .then(() => {
+      alert("تم حذف المستخدم!");
+      loadSpecials();
+    })
+    .catch(err => console.error("خطأ حذف خاص:", err));
+}
+
+function cleanupSpecials() {
+  fetch("/api/special/cleanup", { method: "POST" })
+    .then(() => {
+      alert("تم تنظيف الردود التالفة!");
+      loadSpecials();
+    })
+    .catch(err => console.error("خطأ تنظيف:", err));
+}
+
+function importSpecials() {
+  const fileInput = document.getElementById("import-special-file");
+  const file = fileInput.files[0];
+  if (!file) return alert("اختر ملف JSON أولاً.");
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const content = e.target.result;
+    try {
+      const specials = JSON.parse(content);
+      for (const [user, responses] of Object.entries(specials)) {
+        fetch("/api/special", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user, responses }),
+        });
+      }
+      alert("تم استيراد الردود الخاصة!");
+      loadSpecials();
+    } catch (err) {
+      alert("ملف JSON غير صالح.");
+    }
+  };
+  reader.readAsText(file);
+}
+
+function loadSpecials() {
+  fetch("/api/special")
+    .then(res => res.json())
+    .then(data => {
+      const ul = document.getElementById("special-users-list");
+      ul.innerHTML = "";
+      for (const user of Object.keys(data)) {
+        const li = document.createElement("li");
+        li.textContent = user;
+        ul.appendChild(li);
+      }
+    });
+}
+
+// ---------------- تحميل الإعدادات تلقائي ----------------
 window.onload = () => {
-  loadMentionSettings();
-  loadGameResponses();
-  loadMentionResponses();
-  loadQuestions();
   loadChannels();
   loadSpecials();
 };
