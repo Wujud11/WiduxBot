@@ -224,8 +224,12 @@ function loadChannels() {
 
 // ========== الردود الخاصة ==========
 function addSpecialUser() {
-  const user = document.getElementById("special-user-id").value;
+  const user = document.getElementById("special-user-id").value.trim();
+  if (!user) return alert("رجاءً أدخل اسم المستخدم أولاً");
+
   const responses = document.getElementById("special-responses-box").value.split("\n").filter(Boolean);
+  if (responses.length === 0) return alert("أضف رد واحد على الأقل");
+
   fetch("/api/special", {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ user, responses }),
@@ -250,7 +254,7 @@ function deleteSpecialUser() {
 }
 
 function updateSpecialResponses() {
-  addSpecialUser(); // نفس الدالة
+  addSpecialUser();
 }
 
 function loadSpecials() {
@@ -273,5 +277,5 @@ window.onload = () => {
   loadQuestions();
   loadChannels();
   loadSpecials();
-  loadResponses(); // مهم جداً لتشغيل الردود العامة
+  loadResponses();
 };
