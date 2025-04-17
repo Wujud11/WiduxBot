@@ -4,13 +4,10 @@ from settings_manager import BotSettings
 from bot.mention_guard import MentionGuard
 from engine import WiduxEngine
 
-# تحميل الإعدادات
 settings = BotSettings()
 bot_username = settings.get_setting("bot_username")
 access_token = settings.get_setting("access_token")
-channels = settings.get_setting("channels") or []
 
-# تهيئة الحماية من المنشن
 mention_guard = MentionGuard()
 mention_guard.set_config(
     limit=settings.get_setting("mention_guard_limit"),
@@ -21,26 +18,15 @@ mention_guard.set_config(
     timeout_msg=settings.get_setting("mention_guard_timeout_msg"),
 )
 
-# تحميل الردود العامة (ردود الطقطقة)
-mention_guard.general_roasts = settings.get_setting("mention_responses") or []
-
-# تحميل الردود الخاصة وتسجيلها
-special = settings.get_setting("special_responses") or {}
-for user, responses in special.items():
-    mention_guard.add_special_responses(user, responses)
-
-# كلاس البوت
 class WiduxBot(commands.Bot):
     def __init__(self):
-        super().__init__(
-            token=access_token,
-            prefix="!",
-            initial_channels=channels
-        )
+        super().__init__(token=access_token, prefix="!", initial_channels=[])
         self.engine = WiduxEngine(self)
+        self.last_channels = set()
 
     async def event_ready(self):
         print(f">>> البوت جاهز! اسمه: {bot_username}")
+        asyncio.create_task(self.sync_channels_loop())
 
     async def event_message(self, message):
         if message.echo:
@@ -48,10 +34,8 @@ class WiduxBot(commands.Bot):
 
         username = message.author.name.lower()
 
-        # التحقق من منشن البوت
         if f"@{bot_username.lower()}" in message.content.lower():
             result = mention_guard.handle_mention(username)
-
             if result["action"] == "warn":
                 await message.channel.send(result["message"])
             elif result["action"] == "timeout":
@@ -60,10 +44,31 @@ class WiduxBot(commands.Bot):
             elif result["action"] == "roast":
                 await message.channel.send(result["message"])
 
-        # تمرير الرسالة لمحرك اللعبة
         await self.engine.handle_message(message)
 
-# تشغيل البوت
+    async def sync_channels_loop(self):
+        await self.wait_for_ready()
+        while True:
+            try:
+                current = set(settings.get_setting("channels") or [])
+                added = current - self.last_channels
+                removed = self.last_channels - current
+
+                for channel in added:
+                    await self.join_channels([channel])
+                    print(f"انضم البوت للقناة: {channel}")
+
+                for channel in removed:
+                    await self.part_channels([channel])
+                    print(f"خرج البوت من القناة: {channel}")
+
+                self.last_channels = current
+
+            except Exception as e:
+                print(f"[خطأ مزامنة القنوات] {e}")
+
+            await asyncio.sleep(30)
+
 if __name__ == "__main__":
     bot = WiduxBot()
     bot.run()
