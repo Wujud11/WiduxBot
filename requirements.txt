@@ -1,4 +1,6 @@
+twitchio==2.7.0
 fastapi
 uvicorn
-requests
-pydantic
+aiofiles
+python-multipart
+jinja2
