@@ -76,6 +76,23 @@
 <!-- الأسئلة -->
 <div id="questions" class="section">
   <h2>الأسئلة</h2>
+
+  <h3>إضافة سؤال فردي</h3>
+  <input type="text" id="single-question" placeholder="السؤال">
+  <input type="text" id="single-answer" placeholder="الإجابة الصحيحة">
+  <input type="text" id="single-alts" placeholder="إجابات بديلة (بفاصلة)">
+  <select id="single-type">
+    <option value="Normal">عادي</option>
+    <option value="Golden">ذهبي</option>
+    <option value="Steal">سرقة</option>
+    <option value="Sabotage">تخريب</option>
+    <option value="Fate">اختبار القدر</option>
+    <option value="Doom">هلاك</option>
+  </select>
+  <input type="text" id="single-category" placeholder="التصنيف">
+  <button onclick="addSingleQuestion()">إضافة هذا السؤال</button>
+
+  <h3>إضافة أسئلة دفعة واحدة (Bulk)</h3>
   <textarea id="bulk-questions" placeholder="السؤال | الإجابة | البدائل | النوع | التصنيف\nكل سطر يمثل سؤال"></textarea>
   <input type="file" id="import-questions-file" accept=".json">
   <button onclick="addBulkQuestions()">إضافة الأسئلة</button>
