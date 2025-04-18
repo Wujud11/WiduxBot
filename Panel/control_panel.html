@@ -19,6 +19,7 @@
     button:hover { background: #5b21b6; }
   </style>
 </head>
+
 <body>
 
 <div class="tabs">
@@ -35,10 +36,10 @@
   <h2>إعدادات المنشن</h2>
   <input type="number" id="mention_limit" placeholder="عدد المنشنات المسموحة">
   <input type="text" id="mention_guard_warn_msg" placeholder="رسالة التحذير">
-  <input type="text" id="mention_guard_timeout_msg" placeholder="رسالة التايم أوت">
-  <input type="number" id="mention_guard_duration" placeholder="مدة التايم أوت">
-  <input type="number" id="mention_guard_cooldown" placeholder="مدة التهدئة">
-  <label><input type="checkbox" id="mention_daily_cooldown"> تايم آوت مرة باليوم؟</label>
+  <input type="text" id="mention_guard_timeout_msg" placeholder="رسالة التايم آوت">
+  <input type="number" id="mention_guard_duration" placeholder="مدة التايم آوت بالثواني">
+  <input type="number" id="mention_guard_cooldown" placeholder="مدة التهدئة (ثواني)">
+  <label><input type="checkbox" id="mention_daily_cooldown"> تايم آوت مرة باليوم</label>
   <button onclick="updateMentionSettings()">تحديث الإعدادات</button>
 </div>
 
@@ -49,7 +50,7 @@
     <option value="solo_win_responses">فوز فردي</option>
     <option value="team_win_responses">فوز الفريق</option>
     <option value="team_lose_responses">خسارة الفريق</option>
-    <option value="group_win_responses">فاز ضد مجموعة</option>
+    <option value="group_win_responses">فوز ضد مجموعة</option>
     <option value="group_lose_responses">خسارة ضد مجموعة</option>
     <option value="below_50_responses">أقل من 50</option>
     <option value="below_zero_responses">أقل من صفر</option>
@@ -67,7 +68,7 @@
 <!-- ردود المنشن العامة -->
 <div id="mention-replies" class="section">
   <h2>ردود المنشن العامة</h2>
-  <textarea id="mention-general-responses" placeholder="اكتب ردود المنشن، كل سطر يمثل ردًا"></textarea>
+  <textarea id="mention-general-responses" placeholder="اكتب ردود المنشن، كل سطر رد"></textarea>
   <input type="file" id="import-mention-file" accept=".json">
   <button onclick="updateMentionReplies()">تحديث الردود</button>
   <button onclick="importMentionReplies()">استيراد من JSON</button>
@@ -76,23 +77,6 @@
 <!-- الأسئلة -->
 <div id="questions" class="section">
   <h2>الأسئلة</h2>
-
-  <h3>إضافة سؤال فردي</h3>
-  <input type="text" id="single-question" placeholder="السؤال">
-  <input type="text" id="single-answer" placeholder="الإجابة الصحيحة">
-  <input type="text" id="single-alts" placeholder="إجابات بديلة (بفاصلة)">
-  <select id="single-type">
-    <option value="Normal">عادي</option>
-    <option value="Golden">ذهبي</option>
-    <option value="Steal">سرقة</option>
-    <option value="Sabotage">تخريب</option>
-    <option value="Fate">اختبار القدر</option>
-    <option value="Doom">هلاك</option>
-  </select>
-  <input type="text" id="single-category" placeholder="التصنيف">
-  <button onclick="addSingleQuestion()">إضافة هذا السؤال</button>
-
-  <h3>إضافة أسئلة دفعة واحدة (Bulk)</h3>
   <textarea id="bulk-questions" placeholder="السؤال | الإجابة | البدائل | النوع | التصنيف\nكل سطر يمثل سؤال"></textarea>
   <input type="file" id="import-questions-file" accept=".json">
   <button onclick="addBulkQuestions()">إضافة الأسئلة</button>
@@ -111,16 +95,17 @@
 <div id="special" class="section">
   <h2>الردود الخاصة</h2>
   <input type="text" id="special-user-id" placeholder="اسم المستخدم">
-  <textarea id="special-responses-box" placeholder="ردود خاصة (سطر لكل رد)"></textarea>
+  <textarea id="special-responses-box" placeholder="ردود خاصة (كل سطر رد)"></textarea>
   <input type="file" id="import-special-file" accept=".json">
   <button onclick="addSpecialUser()">إضافة المستخدم</button>
   <button onclick="updateSpecialResponses()">تحديث ردود المستخدم</button>
   <button onclick="deleteSpecialUser()">حذف المستخدم</button>
-  <button onclick="cleanupSpecials()" style="background: crimson;">تنظيف الردود التالفة</button>
+  <button onclick="cleanupSpecials()" style="background: crimson;">تنظيف الردود الفارغة</button>
   <button onclick="importSpecials()">استيراد من JSON</button>
   <ul id="special-users-list"></ul>
 </div>
 
 <script src="control_panel.js"></script>
+
 </body>
 </html>
