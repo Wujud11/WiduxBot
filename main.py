@@ -6,22 +6,22 @@ from bot.engine import WiduxEngine
 
 # تحميل الإعدادات
 settings = BotSettings()
-bot_username = settings.get_setting("username")
-access_token = settings.get_setting("token")
+bot_username = settings.get_setting("bot_username")  # <-- عدلناه هنا
+access_token = settings.get_setting("access_token")  # <-- وعدلناه هنا
 
 # حماية المنشن
 mention_guard = MentionGuard()
 mention_guard.set_config(
     limit=settings.get_setting("mention_limit"),
     duration=settings.get_setting("mention_guard_duration"),
-    cooldown=settings.get_setting("mention_cooldown"),
-    warning_thresh=settings.get_setting("mention_guard_warn_msg"),
+    cooldown=settings.get_setting("mention_guard_cooldown"),
+    warning_thresh=settings.get_setting("mention_guard_warning_thresh"),
     warn_msg=settings.get_setting("mention_guard_warn_msg"),
     timeout_msg=settings.get_setting("mention_guard_timeout_msg"),
 )
 
 # إضافة الردود الخاصة والعامة
-mention_guard.general_roasts = settings.get_setting("general_roasts") or []
+mention_guard.general_roasts = settings.get_setting("mention_responses") or []
 specials = settings.get_setting("special_responses") or {}
 for user, responses in specials.items():
     mention_guard.add_special_responses(user.lower(), responses)
