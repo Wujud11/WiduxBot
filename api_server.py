@@ -1,46 +1,52 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles  # إضافة لاستيراد StaticFiles
-import json
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 import os
+import json
 
+# ========= مسارات البيانات ==========
+DATA_PATHS = {
+    "settings": "data/bot_settings.json",
+    "game_responses": "data/game_responses.json",
+    "mention_responses": "data/mention_responses.json",
+    "questions": "data/questions_bank.json",
+    "channels": "data/channels.json",
+    "special_responses": "data/special_responses.json",
+}
+
+# ========= دوال مساعدة للقراءة والكتابة ==========
+def load_json(path):
+    if not os.path.exists(path):
+        return {}
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+def save_json(path, data):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
+
+# ========= إنشاء تطبيق FastAPI ==========
 app = FastAPI()
 
-# إعداد CORS
+# ========= إعدادات CORS ==========
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# إعداد تقديم الملفات الثابتة من مجلد Panel
+# ========= تقديم الملفات الثابتة (Static Files) ==========
 app.mount("/Panel", StaticFiles(directory="Panel"), name="Panel")
 
-# المسارات الخاصة بكل ملف بيانات
-DATA_PATHS = {
-    "settings": "data/bot_settings.json",
-    "game_responses": "data/game_responses.json",
-    "mention_replies": "data/mention_responses.json",
-    "questions": "data/questions_bank.json",
-    "channels": "data/channels.json",
-    "special_responses": "data/special_responses.json"
-}
+# ========= نقطة البداية (فتح واجهة التحكم) ==========
+@app.get("/")
+def read_root():
+    return FileResponse("Panel/control_panel.html")
 
-# دالة تحميل ملف
-def load_json(file):
-    if not os.path.exists(file):
-        with open(file, "w") as f:
-            json.dump([], f)
-    with open(file, "r") as f:
-        return json.load(f)
-
-# دالة حفظ ملف
-def save_json(file, data):
-    with open(file, "w") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-
-# ========== إعدادات المنشن ==========
+# ========= إعدادات البوت ==========
 @app.get("/settings")
 def get_settings():
     return load_json(DATA_PATHS["settings"])
@@ -48,139 +54,73 @@ def get_settings():
 @app.post("/settings")
 def update_settings(settings: dict):
     save_json(DATA_PATHS["settings"], settings)
-    return {"message": "Settings updated"}
+    return {"message": "Settings updated successfully"}
 
-# ========== ردود اللعبة ==========
+# ========= ردود الألعاب ==========
 @app.get("/game-responses")
 def get_game_responses():
     return load_json(DATA_PATHS["game_responses"])
 
-@app.put("/game/{index}")
-def update_game_response(index: int, item: dict):
-    data = load_json(DATA_PATHS["game_responses"])
-    if index >= len(data):
-        raise HTTPException(status_code=404, detail="Item not found")
-    data[index] = item["value"]
-    save_json(DATA_PATHS["game_responses"], data)
-    return {"message": "Game response updated"}
-
-@app.delete("/game/{index}")
-def delete_game_response(index: int):
-    data = load_json(DATA_PATHS["game_responses"])
-    if index >= len(data):
-        raise HTTPException(status_code=404, detail="Item not found")
-    data.pop(index)
-    save_json(DATA_PATHS["game_responses"], data)
-    return {"message": "Game response deleted"}
-
 @app.post("/import-game-responses")
 def import_game_responses(responses: list):
     save_json(DATA_PATHS["game_responses"], responses)
-    return {"message": "Imported successfully"}
+    return {"message": "Game responses imported successfully"}
 
-# ========== ردود المنشن العامة ==========
+# ========= ردود المنشن ==========
 @app.get("/mention-replies")
 def get_mention_replies():
-    return load_json(DATA_PATHS["mention_replies"])
-
-@app.put("/mention/{index}")
-def update_mention_reply(index: int, item: dict):
-    data = load_json(DATA_PATHS["mention_replies"])
-    if index >= len(data):
-        raise HTTPException(status_code=404, detail="Item not found")
-    data[index] = item["value"]
-    save_json(DATA_PATHS["mention_replies"], data)
-    return {"message": "Mention reply updated"}
-
-@app.delete("/mention/{index}")
-def delete_mention_reply(index: int):
-    data = load_json(DATA_PATHS["mention_replies"])
-    if index >= len(data):
-        raise HTTPException(status_code=404, detail="Item not found")
-    data.pop(index)
-    save_json(DATA_PATHS["mention_replies"], data)
-    return {"message": "Mention reply deleted"}
+    return load_json(DATA_PATHS["mention_responses"])
 
 @app.post("/import-mention-replies")
 def import_mention_replies(responses: list):
-    save_json(DATA_PATHS["mention_replies"], responses)
-    return {"message": "Imported successfully"}
+    save_json(DATA_PATHS["mention_responses"], responses)
+    return {"message": "Mention replies imported successfully"}
 
-# ========== الأسئلة ==========
+# ========= بنك الأسئلة ==========
 @app.get("/questions")
 def get_questions():
     return load_json(DATA_PATHS["questions"])
 
-@app.put("/questions/{index}")
-def update_question(index: int, question: dict):
-    data = load_json(DATA_PATHS["questions"])
-    if index >= len(data):
-        raise HTTPException(status_code=404, detail="Item not found")
-    data[index] = question
-    save_json(DATA_PATHS["questions"], data)
-    return {"message": "Question updated"}
-
-@app.delete("/questions/{index}")
-def delete_question(index: int):
-    data = load_json(DATA_PATHS["questions"])
-    if index >= len(data):
-        raise HTTPException(status_code=404, detail="Item not found")
-    data.pop(index)
-    save_json(DATA_PATHS["questions"], data)
-    return {"message": "Question deleted"}
-
 @app.post("/import-questions")
 def import_questions(questions: list):
     save_json(DATA_PATHS["questions"], questions)
-    return {"message": "Imported successfully"}
+    return {"message": "Questions imported successfully"}
 
-# ========== القنوات ==========
+# ========= القنوات ==========
 @app.get("/channels")
 def get_channels():
     return load_json(DATA_PATHS["channels"])
 
 @app.put("/channel/{index}")
-def update_channel(index: int, item: dict):
-    data = load_json(DATA_PATHS["channels"])
-    if index >= len(data):
-        raise HTTPException(status_code=404, detail="Item not found")
-    data[index] = item["value"]
-    save_json(DATA_PATHS["channels"], data)
-    return {"message": "Channel updated"}
+def update_channel(index: int, channel: dict):
+    channels = load_json(DATA_PATHS["channels"])
+    if 0 <= index < len(channels):
+        channels[index] = channel
+        save_json(DATA_PATHS["channels"], channels)
+        return {"message": "Channel updated successfully"}
+    return {"error": "Invalid index"}
 
 @app.delete("/channel/{index}")
 def delete_channel(index: int):
-    data = load_json(DATA_PATHS["channels"])
-    if index >= len(data):
-        raise HTTPException(status_code=404, detail="Item not found")
-    data.pop(index)
-    save_json(DATA_PATHS["channels"], data)
-    return {"message": "Channel deleted"}
+    channels = load_json(DATA_PATHS["channels"])
+    if 0 <= index < len(channels):
+        channels.pop(index)
+        save_json(DATA_PATHS["channels"], channels)
+        return {"message": "Channel deleted successfully"}
+    return {"error": "Invalid index"}
 
-# ========== الردود الخاصة ==========
+# ========= استيراد قنوات جديدة ==========
+@app.post("/import-channels")
+def import_channels(channels: list):
+    save_json(DATA_PATHS["channels"], channels)
+    return {"message": "Channels imported successfully"}
+
+# ========= الردود الخاصة ==========
 @app.get("/special-responses")
 def get_special_responses():
     return load_json(DATA_PATHS["special_responses"])
 
-@app.put("/special-responses/{index}")
-def update_special_user(index: int, user: dict):
-    data = load_json(DATA_PATHS["special_responses"])
-    if index >= len(data):
-        raise HTTPException(status_code=404, detail="User not found")
-    data[index] = user
-    save_json(DATA_PATHS["special_responses"], data)
-    return {"message": "Special user updated"}
-
-@app.delete("/special-responses/{index}")
-def delete_special_user(index: int):
-    data = load_json(DATA_PATHS["special_responses"])
-    if index >= len(data):
-        raise HTTPException(status_code=404, detail="User not found")
-    data.pop(index)
-    save_json(DATA_PATHS["special_responses"], data)
-    return {"message": "Special user deleted"}
-
 @app.post("/import-special-responses")
-def import_special_responses(users: list):
-    save_json(DATA_PATHS["special_responses"], users)
-    return {"message": "Imported successfully"}
+def import_special_responses(responses: list):
+    save_json(DATA_PATHS["special_responses"], responses)
+    return {"message": "Special responses imported successfully"}
