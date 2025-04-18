@@ -1,95 +1,43 @@
+
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
-  <meta charset="UTF-8">
-  <title>لوحة تحكم Widux</title>
-  <style>
-    body { background-color: #121212; color: #fff; font-family: sans-serif; padding: 20px; }
-    .tabs { display: flex; flex-wrap: wrap; margin-bottom: 20px; }
-    .tab { background: #2b2b2b; padding: 10px 20px; margin: 5px; border-radius: 6px; cursor: pointer; }
-    .tab.active { background: #7c3aed; }
-    .section { display: none; background: #1e1e1e; border-radius: 8px; padding: 20px; }
-    .section.active { display: block; }
-    input, textarea, select, button {
-      width: 100%; padding: 8px; margin: 10px 0; border-radius: 6px;
-      border: none; background: #2b2b2b; color: #fff;
-    }
-    textarea { height: 160px; resize: vertical; }
-    button { background: #7c3aed; cursor: pointer; }
-    button:hover { background: #5b21b6; }
-    .item { background: #292929; padding: 10px; margin: 10px 0; border-radius: 6px; }
-    .item-buttons { margin-top: 10px; display: flex; gap: 10px; }
-  </style>
+    <meta charset="UTF-8">
+    <title>لوحة تحكم WiduxBot</title>
+    <script src="control_panel.js"></script>
 </head>
-
 <body>
+    <h1>لوحة تحكم WiduxBot</h1>
 
-<div class="tabs">
-  <div class="tab active" onclick="showTab('settings')">إعدادات المنشن</div>
-  <div class="tab" onclick="showTab('game-responses')">ردود اللعبة</div>
-  <div class="tab" onclick="showTab('mention-replies')">ردود المنشن العامة</div>
-  <div class="tab" onclick="showTab('questions')">الأسئلة</div>
-  <div class="tab" onclick="showTab('channels')">القنوات</div>
-  <div class="tab" onclick="showTab('special')">الردود الخاصة</div>
-</div>
+    <button onclick="fetchSettings()">تحديث الإعدادات</button>
+    <div id="settings-container"></div>
+    <hr>
 
-<!-- إعدادات المنشن -->
-<div id="settings" class="section active">
-  <h2>إعدادات المنشن</h2>
-  <input type="number" id="mention_limit" placeholder="عدد المنشنات المسموحة">
-  <input type="text" id="mention_guard_warn_msg" placeholder="رسالة التحذير">
-  <input type="text" id="mention_guard_timeout_msg" placeholder="رسالة التايم آوت">
-  <input type="number" id="mention_guard_duration" placeholder="مدة التايم آوت بالثواني">
-  <input type="number" id="mention_guard_cooldown" placeholder="مدة التهدئة بالثواني">
-  <label><input type="checkbox" id="mention_daily_cooldown"> تايم آوت مرة باليوم</label>
-  <button onclick="updateMentionSettings()">تحديث الإعدادات</button>
-</div>
+    <button onclick="fetchGameResponses()">تحديث ردود اللعبة</button>
+    <button onclick="showAddResponseForm()">إضافة رد لعبة</button>
+    <div id="game-responses-container"></div>
+    <hr>
 
-<!-- ردود اللعبة -->
-<div id="game-responses" class="section">
-  <h2>ردود اللعبة</h2>
-  <button onclick="showAddResponseForm('game')">إضافة رد جديد</button>
-  <input type="file" id="import-game-responses-file" accept=".json">
-  <button onclick="importGameResponses()">استيراد من JSON</button>
-  <div id="game-responses-list"></div>
-</div>
+    <button onclick="fetchMentionReplies()">تحديث ردود المنشن</button>
+    <button onclick="showAddMentionForm()">إضافة رد منشن</button>
+    <div id="mention-replies-container"></div>
+    <hr>
 
-<!-- ردود المنشن العامة -->
-<div id="mention-replies" class="section">
-  <h2>ردود المنشن العامة</h2>
-  <button onclick="showAddResponseForm('mention')">إضافة رد جديد</button>
-  <input type="file" id="import-mention-replies-file" accept=".json">
-  <button onclick="importMentionReplies()">استيراد من JSON</button>
-  <div id="mention-replies-list"></div>
-</div>
+    <button onclick="fetchQuestions()">تحديث الأسئلة</button>
+    <button onclick="showAddQuestionForm()">إضافة سؤال</button>
+    <div id="questions-container"></div>
+    <hr>
 
-<!-- الأسئلة -->
-<div id="questions" class="section">
-  <h2>الأسئلة</h2>
-  <button onclick="showAddQuestionForm()">إضافة سؤال جديد</button>
-  <input type="file" id="import-questions-file" accept=".json">
-  <button onclick="importQuestions()">استيراد من JSON</button>
-  <div id="questions-list"></div>
-</div>
+    <button onclick="fetchChannels()">تحديث القنوات</button>
+    <button onclick="showAddChannelForm()">إضافة قناة</button>
+    <div id="channels-container"></div>
+    <hr>
 
-<!-- القنوات -->
-<div id="channels" class="section">
-  <h2>القنوات</h2>
-  <button onclick="showAddChannelForm()">إضافة قناة جديدة</button>
-  <div id="channels-list"></div>
-</div>
+    <button onclick="fetchSpecialResponses()">تحديث الردود الخاصة</button>
+    <button onclick="showAddSpecialUserForm()">إضافة رد خاص</button>
+    <div id="special-responses-container"></div>
 
-<!-- الردود الخاصة -->
-<div id="special" class="section">
-  <h2>الردود الخاصة</h2>
-  <button onclick="showAddSpecialUserForm()">إضافة مستخدم بردود خاصة</button>
-  <input type="file" id="import-special-responses-file" accept=".json">
-  <button onclick="importSpecialResponses()">استيراد من JSON</button>
-  <div id="special-users-list"></div>
-</div>
-
-<!-- سكربت اللوحة -->
-<script src="control_panel.js"></script>
+    <div id="form-container"></div>
 
 </body>
 </html>

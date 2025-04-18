@@ -1,259 +1,139 @@
-// control_panel.js
 
-const API_BASE_URL = "http://128.199.217.221:9200"; // IP السيرفر مع المنفذ
+const API_BASE_URL = "http://128.199.217.221:9200";
 
-async function fetchData(url) {
-  const response = await fetch(API_BASE_URL + url);
-  return response.json();
+async function fetchSettings() {
+    const res = await fetch(API_BASE_URL + "/settings");
+    const data = await res.json();
+    document.getElementById("settings-container").innerText = JSON.stringify(data, null, 2);
 }
 
-async function postData(url, data) {
-  await fetch(API_BASE_URL + url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  });
+async function fetchGameResponses() {
+    const res = await fetch(API_BASE_URL + "/game-responses");
+    const data = await res.json();
+    document.getElementById("game-responses-container").innerText = JSON.stringify(data, null, 2);
 }
 
-async function putData(url, data) {
-  await fetch(API_BASE_URL + url, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  });
+async function fetchMentionReplies() {
+    const res = await fetch(API_BASE_URL + "/mention-replies");
+    const data = await res.json();
+    document.getElementById("mention-replies-container").innerText = JSON.stringify(data, null, 2);
 }
 
-async function deleteData(url) {
-  await fetch(API_BASE_URL + url, {
-    method: "DELETE"
-  });
+async function fetchQuestions() {
+    const res = await fetch(API_BASE_URL + "/questions");
+    const data = await res.json();
+    document.getElementById("questions-container").innerText = JSON.stringify(data, null, 2);
 }
 
-// Tabs switching
-function showTab(id) {
-  document.querySelectorAll(".section").forEach(section => {
-    section.classList.remove("active");
-  });
-  document.getElementById(id).classList.add("active");
-
-  if (id === "game-responses") loadGameResponses();
-  else if (id === "mention-replies") loadMentionReplies();
-  else if (id === "questions") loadQuestions();
-  else if (id === "channels") loadChannels();
-  else if (id === "special") loadSpecialResponses();
-  else if (id === "settings") loadMentionSettings();
+async function fetchChannels() {
+    const res = await fetch(API_BASE_URL + "/channels");
+    const data = await res.json();
+    document.getElementById("channels-container").innerText = JSON.stringify(data, null, 2);
 }
 
-/* ----------------- إعدادات المنشن ----------------- */
-async function loadMentionSettings() {
-  const data = await fetchData("/settings");
-  document.getElementById("mention_limit").value = data.mention_limit;
-  document.getElementById("mention_guard_warn_msg").value = data.mention_guard_warn_msg;
-  document.getElementById("mention_guard_timeout_msg").value = data.mention_guard_timeout_msg;
-  document.getElementById("mention_guard_duration").value = data.mention_guard_duration;
-  document.getElementById("mention_guard_cooldown").value = data.mention_guard_cooldown;
-  document.getElementById("mention_daily_cooldown").checked = data.mention_daily_cooldown;
+async function fetchSpecialResponses() {
+    const res = await fetch(API_BASE_URL + "/special-responses");
+    const data = await res.json();
+    document.getElementById("special-responses-container").innerText = JSON.stringify(data, null, 2);
 }
 
-async function updateMentionSettings() {
-  const settings = {
-    mention_limit: parseInt(document.getElementById("mention_limit").value),
-    mention_guard_warn_msg: document.getElementById("mention_guard_warn_msg").value,
-    mention_guard_timeout_msg: document.getElementById("mention_guard_timeout_msg").value,
-    mention_guard_duration: parseInt(document.getElementById("mention_guard_duration").value),
-    mention_guard_cooldown: parseInt(document.getElementById("mention_guard_cooldown").value),
-    mention_daily_cooldown: document.getElementById("mention_daily_cooldown").checked
-  };
-  await postData("/settings", settings);
-  alert("تم تحديث إعدادات المنشن!");
+// دوال الإضافة
+function showAddResponseForm() {
+    document.getElementById("form-container").innerHTML = `
+        <input id="new-response" placeholder="نص الرد الجديد">
+        <button onclick="addGameResponse()">حفظ</button>
+    `;
 }
 
-/* ----------------- رسم العناصر ----------------- */
-function createItemDiv(text, index, type) {
-  const div = document.createElement("div");
-  div.className = "item";
-  div.innerHTML = `
-    <input type="text" id="${type}-edit-${index}" value="${text}" style="width:80%;">
-    <div class="item-buttons">
-      <button onclick="updateItem('${type}', ${index})">تعديل</button>
-      <button onclick="deleteItem('${type}', ${index})">حذف</button>
-    </div>
-  `;
-  return div;
+async function addGameResponse() {
+    const newValue = document.getElementById("new-response").value;
+    const responses = await fetch(API_BASE_URL + "/game-responses").then(r => r.json());
+    responses.push(newValue);
+    await fetch(API_BASE_URL + "/import-game-responses", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(responses)
+    });
+    alert("تمت إضافة الرد!");
+    fetchGameResponses();
 }
 
-function createQuestionDiv(question, index) {
-  const div = document.createElement("div");
-  div.className = "item";
-  div.innerHTML = `
-    <input type="text" id="question-${index}" value="${question.question}" placeholder="السؤال">
-    <input type="text" id="answer-${index}" value="${question.answer}" placeholder="الإجابة الصحيحة">
-    <input type="text" id="alternatives-${index}" value="${question.alternatives.join(',')}" placeholder="بدائل الإجابة">
-    <input type="text" id="type-${index}" value="${question.type}" placeholder="نوع السؤال">
-    <input type="text" id="category-${index}" value="${question.category}" placeholder="تصنيف السؤال">
-    <div class="item-buttons">
-      <button onclick="updateQuestion(${index})">تعديل</button>
-      <button onclick="deleteQuestion(${index})">حذف</button>
-    </div>
-  `;
-  return div;
+function showAddMentionForm() {
+    document.getElementById("form-container").innerHTML = `
+        <input id="new-mention" placeholder="نص المنشن الجديد">
+        <button onclick="addMentionReply()">حفظ</button>
+    `;
 }
 
-function createSpecialUserDiv(user, index) {
-  const div = document.createElement("div");
-  div.className = "item";
-  div.innerHTML = `
-    <input type="text" id="special-user-${index}" value="${user.username}" placeholder="اسم المستخدم">
-    <textarea id="special-responses-${index}" placeholder="ردود خاصة (كل سطر رد)">${user.responses.join('\n')}</textarea>
-    <div class="item-buttons">
-      <button onclick="updateSpecialUser(${index})">تعديل</button>
-      <button onclick="deleteSpecialUser(${index})">حذف</button>
-    </div>
-  `;
-  return div;
+async function addMentionReply() {
+    const newValue = document.getElementById("new-mention").value;
+    const replies = await fetch(API_BASE_URL + "/mention-replies").then(r => r.json());
+    replies.push(newValue);
+    await fetch(API_BASE_URL + "/import-mention-replies", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(replies)
+    });
+    alert("تمت إضافة الرد على المنشن!");
+    fetchMentionReplies();
 }
 
-/* ----------------- تحميل البيانات ----------------- */
-async function loadGameResponses() {
-  const list = document.getElementById("game-responses-list");
-  list.innerHTML = "";
-  const data = await fetchData("/game-responses");
-  data.forEach((response, index) => {
-    const div = createItemDiv(response, index, "game");
-    list.appendChild(div);
-  });
+function showAddQuestionForm() {
+    document.getElementById("form-container").innerHTML = `
+        <input id="new-question" placeholder="السؤال الجديد">
+        <button onclick="addQuestion()">حفظ</button>
+    `;
 }
 
-async function loadMentionReplies() {
-  const list = document.getElementById("mention-replies-list");
-  list.innerHTML = "";
-  const data = await fetchData("/mention-replies");
-  data.forEach((response, index) => {
-    const div = createItemDiv(response, index, "mention");
-    list.appendChild(div);
-  });
+async function addQuestion() {
+    const newValue = document.getElementById("new-question").value;
+    const questions = await fetch(API_BASE_URL + "/questions").then(r => r.json());
+    questions.push(newValue);
+    await fetch(API_BASE_URL + "/import-questions", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(questions)
+    });
+    alert("تمت إضافة السؤال!");
+    fetchQuestions();
 }
 
-async function loadQuestions() {
-  const list = document.getElementById("questions-list");
-  list.innerHTML = "";
-  const data = await fetchData("/questions");
-  data.forEach((question, index) => {
-    const div = createQuestionDiv(question, index);
-    list.appendChild(div);
-  });
+function showAddChannelForm() {
+    document.getElementById("form-container").innerHTML = `
+        <input id="new-channel" placeholder="اسم القناة الجديدة">
+        <button onclick="addChannel()">حفظ</button>
+    `;
 }
 
-async function loadChannels() {
-  const list = document.getElementById("channels-list");
-  list.innerHTML = "";
-  const data = await fetchData("/channels");
-  data.forEach((channel, index) => {
-    const div = createItemDiv(channel, index, "channel");
-    list.appendChild(div);
-  });
+async function addChannel() {
+    const newValue = document.getElementById("new-channel").value;
+    const channels = await fetch(API_BASE_URL + "/channels").then(r => r.json());
+    channels.push(newValue);
+    await fetch(API_BASE_URL + "/import-channels", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(channels)
+    });
+    alert("تمت إضافة القناة!");
+    fetchChannels();
 }
 
-async function loadSpecialResponses() {
-  const list = document.getElementById("special-users-list");
-  list.innerHTML = "";
-  const data = await fetchData("/special-responses");
-  data.forEach((user, index) => {
-    const div = createSpecialUserDiv(user, index);
-    list.appendChild(div);
-  });
+function showAddSpecialUserForm() {
+    document.getElementById("form-container").innerHTML = `
+        <input id="new-special-user" placeholder="رد خاص جديد">
+        <button onclick="addSpecialResponse()">حفظ</button>
+    `;
 }
 
-/* ----------------- تعديل وحذف ----------------- */
-async function updateItem(type, index) {
-  const value = document.getElementById(`${type}-edit-${index}`).value;
-  await putData(`/${type}/${index}`, { value });
-  alert("تم تعديل العنصر!");
-  showTab(`${type === "game" ? "game-responses" : type === "mention" ? "mention-replies" : "channels"}`);
-}
-
-async function deleteItem(type, index) {
-  await deleteData(`/${type}/${index}`);
-  alert("تم حذف العنصر!");
-  showTab(`${type === "game" ? "game-responses" : type === "mention" ? "mention-replies" : "channels"}`);
-}
-
-async function updateQuestion(index) {
-  const data = {
-    question: document.getElementById(`question-${index}`).value,
-    answer: document.getElementById(`answer-${index}`).value,
-    alternatives: document.getElementById(`alternatives-${index}`).value.split(','),
-    type: document.getElementById(`type-${index}`).value,
-    category: document.getElementById(`category-${index}`).value
-  };
-  await putData(`/questions/${index}`, data);
-  alert("تم تعديل السؤال!");
-  showTab("questions");
-}
-
-async function deleteQuestion(index) {
-  await deleteData(`/questions/${index}`);
-  alert("تم حذف السؤال!");
-  showTab("questions");
-}
-
-async function updateSpecialUser(index) {
-  const data = {
-    username: document.getElementById(`special-user-${index}`).value,
-    responses: document.getElementById(`special-responses-${index}`).value.split('\n')
-  };
-  await putData(`/special-responses/${index}`, data);
-  alert("تم تعديل المستخدم!");
-  showTab("special");
-}
-
-async function deleteSpecialUser(index) {
-  await deleteData(`/special-responses/${index}`);
-  alert("تم حذف المستخدم!");
-  showTab("special");
-}
-
-/* ----------------- استيراد ملفات JSON ----------------- */
-async function importGameResponses() {
-  const fileInput = document.getElementById("import-game-responses-file");
-  const file = fileInput.files[0];
-  if (!file) return;
-  const text = await file.text();
-  const data = JSON.parse(text);
-  await postData("/import-game-responses", data);
-  alert("تم استيراد الردود!");
-  showTab("game-responses");
-}
-
-async function importMentionReplies() {
-  const fileInput = document.getElementById("import-mention-replies-file");
-  const file = fileInput.files[0];
-  if (!file) return;
-  const text = await file.text();
-  const data = JSON.parse(text);
-  await postData("/import-mention-replies", data);
-  alert("تم استيراد ردود المنشن!");
-  showTab("mention-replies");
-}
-
-async function importQuestions() {
-  const fileInput = document.getElementById("import-questions-file");
-  const file = fileInput.files[0];
-  if (!file) return;
-  const text = await file.text();
-  const data = JSON.parse(text);
-  await postData("/import-questions", data);
-  alert("تم استيراد الأسئلة!");
-  showTab("questions");
-}
-
-async function importSpecialResponses() {
-  const fileInput = document.getElementById("import-special-responses-file");
-  const file = fileInput.files[0];
-  if (!file) return;
-  const text = await file.text();
-  const data = JSON.parse(text);
-  await postData("/import-special-responses", data);
-  alert("تم استيراد الردود الخاصة!");
-  showTab("special");
+async function addSpecialResponse() {
+    const newValue = document.getElementById("new-special-user").value;
+    const users = await fetch(API_BASE_URL + "/special-responses").then(r => r.json());
+    users.push(newValue);
+    await fetch(API_BASE_URL + "/import-special-responses", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(users)
+    });
+    alert("تمت إضافة الرد الخاص!");
+    fetchSpecialResponses();
 }
