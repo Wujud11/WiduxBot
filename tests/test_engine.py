@@ -18,11 +18,15 @@ def test_initial_state(engine):
 
 @pytest.mark.asyncio
 async def test_set_mode(engine):
+    class FakeChannel:
+        async def send(self, msg):
+            pass
+
     class FakeMessage:
         def __init__(self, content):
             self.content = content
             self.author = SimpleNamespace(name="player1")
-            self.channel = SimpleNamespace(send=lambda x: None)
+            self.channel = FakeChannel()
             self.echo = False
 
     await engine.handle_message(FakeMessage("وج؟"))
