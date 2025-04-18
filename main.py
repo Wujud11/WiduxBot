@@ -4,32 +4,36 @@ from settings_manager import BotSettings
 from bot.mention_guard import MentionGuard
 from bot.engine import WiduxEngine
 
-# تحميل الإعدادات
-settings = BotSettings()
-bot_username = settings.get_setting("bot_username")
-access_token = settings.get_setting("access_token")
+# دالة لجلب الإعدادات المحدثة دائماً
+def get_settings():
+    return BotSettings()
 
 # حماية المنشن
 mention_guard = MentionGuard()
-mention_guard.set_config(
-    limit=settings.get_setting("mention_limit"),
-    duration=settings.get_setting("mention_guard_duration"),
-    cooldown=settings.get_setting("mention_guard_cooldown"),
-    warning_thresh=settings.get_setting("mention_guard_warning_thresh"),
-    warn_msg=settings.get_setting("mention_guard_warn_msg"),
-    timeout_msg=settings.get_setting("mention_guard_timeout_msg"),
-)
 
-# إضافة الردود الخاصة والعامة
-mention_guard.general_roasts = settings.get_setting("general_roasts") or []   # ← هنا حملنا general_roasts صح
-specials = settings.get_setting("special_responses") or {}
-for user, responses in specials.items():
-    mention_guard.add_special_responses(user.lower(), responses)
+def setup_mention_guard():
+    settings = get_settings()
+    mention_guard.set_config(
+        limit=settings.get_setting("mention_limit"),
+        duration=settings.get_setting("mention_guard_duration"),
+        cooldown=settings.get_setting("mention_guard_cooldown"),
+        warning_thresh=settings.get_setting("mention_guard_warning_thresh"),
+        warn_msg=settings.get_setting("mention_guard_warn_msg"),
+        timeout_msg=settings.get_setting("mention_guard_timeout_msg"),
+    )
+    mention_guard.general_roasts = settings.get_setting("general_roasts") or []
+    specials = settings.get_setting("special_responses") or {}
+    for user, responses in specials.items():
+        mention_guard.add_special_responses(user.lower(), responses)
+
+# إعداد حماية المنشن في البداية
+setup_mention_guard()
 
 class WiduxBot(commands.Bot):
     def __init__(self):
+        settings = get_settings()
         super().__init__(
-            token=access_token,
+            token=settings.get_setting("access_token"),
             prefix="!",
             initial_channels=[]
         )
@@ -37,7 +41,8 @@ class WiduxBot(commands.Bot):
         self.last_channels = set()
 
     async def event_ready(self):
-        print(f">>> البوت جاهز! اسمه: {bot_username}")
+        settings = get_settings()
+        print(f">>> البوت جاهز! اسمه: {settings.get_setting('bot_username')}")
         asyncio.create_task(self.sync_channels_loop())
 
     async def event_message(self, message):
@@ -45,8 +50,9 @@ class WiduxBot(commands.Bot):
             return
 
         username = message.author.name.lower()
+        settings = get_settings()
 
-        if f"@{bot_username.lower()}" in message.content.lower():
+        if f"@{settings.get_setting('bot_username').lower()}" in message.content.lower():
             result = mention_guard.handle_mention(username)
             if result["action"] == "warn":
                 await message.channel.send(result["message"])
@@ -62,6 +68,7 @@ class WiduxBot(commands.Bot):
         await self.wait_for_ready()
         while True:
             try:
+                settings = get_settings()
                 current = set(settings.get_setting("channels") or [])
                 added = current - self.last_channels
                 removed = self.last_channels - current
