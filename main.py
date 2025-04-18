@@ -6,8 +6,8 @@ from bot.engine import WiduxEngine
 
 # تحميل الإعدادات
 settings = BotSettings()
-bot_username = settings.get_setting("bot_username")  # <-- عدلناه هنا
-access_token = settings.get_setting("access_token")  # <-- وعدلناه هنا
+bot_username = settings.get_setting("bot_username")
+access_token = settings.get_setting("access_token")
 
 # حماية المنشن
 mention_guard = MentionGuard()
@@ -21,7 +21,7 @@ mention_guard.set_config(
 )
 
 # إضافة الردود الخاصة والعامة
-mention_guard.general_roasts = settings.get_setting("mention_responses") or []
+mention_guard.general_roasts = settings.get_setting("general_roasts") or []   # ← هنا حملنا general_roasts صح
 specials = settings.get_setting("special_responses") or {}
 for user, responses in specials.items():
     mention_guard.add_special_responses(user.lower(), responses)
@@ -46,7 +46,6 @@ class WiduxBot(commands.Bot):
 
         username = message.author.name.lower()
 
-        # تعامل مع المنشن
         if f"@{bot_username.lower()}" in message.content.lower():
             result = mention_guard.handle_mention(username)
             if result["action"] == "warn":
