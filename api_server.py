@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles  # إضافة لاستيراد StaticFiles
 import json
 import os
 
@@ -12,6 +13,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# إعداد تقديم الملفات الثابتة من مجلد Panel
+app.mount("/Panel", StaticFiles(directory="Panel"), name="Panel")
 
 # المسارات الخاصة بكل ملف بيانات
 DATA_PATHS = {
