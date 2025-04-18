@@ -1,12 +1,14 @@
 // control_panel.js
 
+const API_BASE_URL = "http://128.199.217.221:9200"; // IP السيرفر مع المنفذ
+
 async function fetchData(url) {
-  const response = await fetch(url);
+  const response = await fetch(API_BASE_URL + url);
   return response.json();
 }
 
 async function postData(url, data) {
-  await fetch(url, {
+  await fetch(API_BASE_URL + url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
@@ -14,7 +16,7 @@ async function postData(url, data) {
 }
 
 async function putData(url, data) {
-  await fetch(url, {
+  await fetch(API_BASE_URL + url, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
@@ -22,7 +24,7 @@ async function putData(url, data) {
 }
 
 async function deleteData(url) {
-  await fetch(url, {
+  await fetch(API_BASE_URL + url, {
     method: "DELETE"
   });
 }
