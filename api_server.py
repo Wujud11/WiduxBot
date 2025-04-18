@@ -1,15 +1,11 @@
-from fastapi import FastAPI, UploadFile, File
-from fastapi.responses import FileResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import List, Dict
 import json
-
-from settings_manager import BotSettings
+import os
 
 app = FastAPI()
 
+# إعداد CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -17,127 +13,170 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/Panel", StaticFiles(directory="Panel"), name="panel")
+# المسارات الخاصة بكل ملف بيانات
+DATA_PATHS = {
+    "settings": "data/bot_settings.json",
+    "game_responses": "data/game_responses.json",
+    "mention_replies": "data/mention_responses.json",
+    "questions": "data/questions_bank.json",
+    "channels": "data/channels.json",
+    "special_responses": "data/special_responses.json"
+}
 
-settings = BotSettings()
+# دالة تحميل ملف
+def load_json(file):
+    if not os.path.exists(file):
+        with open(file, "w") as f:
+            json.dump([], f)
+    with open(file, "r") as f:
+        return json.load(f)
 
-@app.get("/")
-def root():
-    return FileResponse("Panel/control_panel.html")
+# دالة حفظ ملف
+def save_json(file, data):
+    with open(file, "w") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
 
-# ---------------- إعدادات المنشن ----------------
-class MentionSettings(BaseModel):
-    mention_limit: int
-    mention_guard_warn_msg: str
-    mention_guard_timeout_msg: str
-    mention_guard_duration: int
-    mention_guard_cooldown: int
-    mention_daily_cooldown: bool
+# ========== إعدادات المنشن ==========
+@app.get("/settings")
+def get_settings():
+    return load_json(DATA_PATHS["settings"])
 
-@app.get("/api/settings/mention")
-def get_mention_settings():
-    return {
-        "mention_limit": settings.get_setting("mention_limit") or 2,
-        "mention_guard_warn_msg": settings.get_setting("mention_guard_warn_msg") or "",
-        "mention_guard_timeout_msg": settings.get_setting("mention_guard_timeout_msg") or "",
-        "mention_guard_duration": settings.get_setting("mention_guard_duration") or 5,
-        "mention_guard_cooldown": settings.get_setting("mention_guard_cooldown") or 86400,
-        "mention_daily_cooldown": settings.get_setting("mention_daily_cooldown") or False,
-    }
+@app.post("/settings")
+def update_settings(settings: dict):
+    save_json(DATA_PATHS["settings"], settings)
+    return {"message": "Settings updated"}
 
-@app.post("/api/settings/mention")
-def update_mention_settings(data: MentionSettings):
-    settings.update_bot_settings(data.dict())
-    return {"status": "mention settings updated"}
+# ========== ردود اللعبة ==========
+@app.get("/game-responses")
+def get_game_responses():
+    return load_json(DATA_PATHS["game_responses"])
 
-# ---------------- ردود اللعبة ----------------
-@app.get("/api/responses/{key}")
-def get_responses(key: str):
-    responses = settings.get_setting("custom_responses") or {}
-    return responses.get(key, [])
+@app.put("/game/{index}")
+def update_game_response(index: int, item: dict):
+    data = load_json(DATA_PATHS["game_responses"])
+    if index >= len(data):
+        raise HTTPException(status_code=404, detail="Item not found")
+    data[index] = item["value"]
+    save_json(DATA_PATHS["game_responses"], data)
+    return {"message": "Game response updated"}
 
-@app.post("/api/responses/{key}")
-def update_responses(key: str, responses: List[str]):
-    all_responses = settings.get_setting("custom_responses") or {}
-    all_responses[key] = responses
-    settings.update_setting("custom_responses", all_responses)
-    return {"status": "responses updated"}
+@app.delete("/game/{index}")
+def delete_game_response(index: int):
+    data = load_json(DATA_PATHS["game_responses"])
+    if index >= len(data):
+        raise HTTPException(status_code=404, detail="Item not found")
+    data.pop(index)
+    save_json(DATA_PATHS["game_responses"], data)
+    return {"message": "Game response deleted"}
 
-# ---------------- ردود المنشن العامة ----------------
-@app.get("/api/mention_responses")
-def get_mention_general_responses():
-    return settings.get_setting("mention_responses") or []
+@app.post("/import-game-responses")
+def import_game_responses(responses: list):
+    save_json(DATA_PATHS["game_responses"], responses)
+    return {"message": "Imported successfully"}
 
-@app.post("/api/mention_responses")
-def update_mention_general_responses(responses: List[str]):
-    settings.update_setting("mention_responses", responses)
-    return {"status": "mention responses updated"}
+# ========== ردود المنشن العامة ==========
+@app.get("/mention-replies")
+def get_mention_replies():
+    return load_json(DATA_PATHS["mention_replies"])
 
-# ---------------- إدارة الأسئلة ----------------
-class QuestionItem(BaseModel):
-    question: str
-    correct_answer: str
-    alt_answers: List[str]
-    q_type: str
-    category: str
+@app.put("/mention/{index}")
+def update_mention_reply(index: int, item: dict):
+    data = load_json(DATA_PATHS["mention_replies"])
+    if index >= len(data):
+        raise HTTPException(status_code=404, detail="Item not found")
+    data[index] = item["value"]
+    save_json(DATA_PATHS["mention_replies"], data)
+    return {"message": "Mention reply updated"}
 
-@app.post("/api/questions/bulk")
-def add_bulk_questions(questions: List[QuestionItem]):
-    existing_questions = settings.get_setting("questions") or []
-    existing_questions.extend([q.dict() for q in questions])
-    settings.update_setting("questions", existing_questions)
-    return {"status": "bulk questions added"}
+@app.delete("/mention/{index}")
+def delete_mention_reply(index: int):
+    data = load_json(DATA_PATHS["mention_replies"])
+    if index >= len(data):
+        raise HTTPException(status_code=404, detail="Item not found")
+    data.pop(index)
+    save_json(DATA_PATHS["mention_replies"], data)
+    return {"message": "Mention reply deleted"}
 
-# ---------------- إدارة القنوات ----------------
-class ChannelItem(BaseModel):
-    name: str
+@app.post("/import-mention-replies")
+def import_mention_replies(responses: list):
+    save_json(DATA_PATHS["mention_replies"], responses)
+    return {"message": "Imported successfully"}
 
-@app.get("/api/channels")
+# ========== الأسئلة ==========
+@app.get("/questions")
+def get_questions():
+    return load_json(DATA_PATHS["questions"])
+
+@app.put("/questions/{index}")
+def update_question(index: int, question: dict):
+    data = load_json(DATA_PATHS["questions"])
+    if index >= len(data):
+        raise HTTPException(status_code=404, detail="Item not found")
+    data[index] = question
+    save_json(DATA_PATHS["questions"], data)
+    return {"message": "Question updated"}
+
+@app.delete("/questions/{index}")
+def delete_question(index: int):
+    data = load_json(DATA_PATHS["questions"])
+    if index >= len(data):
+        raise HTTPException(status_code=404, detail="Item not found")
+    data.pop(index)
+    save_json(DATA_PATHS["questions"], data)
+    return {"message": "Question deleted"}
+
+@app.post("/import-questions")
+def import_questions(questions: list):
+    save_json(DATA_PATHS["questions"], questions)
+    return {"message": "Imported successfully"}
+
+# ========== القنوات ==========
+@app.get("/channels")
 def get_channels():
-    return settings.get_setting("channels") or []
+    return load_json(DATA_PATHS["channels"])
 
-@app.post("/api/channels")
-def add_channel(item: ChannelItem):
-    channels = settings.get_setting("channels") or []
-    if item.name not in channels:
-        channels.append(item.name)
-    settings.update_setting("channels", channels)
-    return {"status": "channel added"}
+@app.put("/channel/{index}")
+def update_channel(index: int, item: dict):
+    data = load_json(DATA_PATHS["channels"])
+    if index >= len(data):
+        raise HTTPException(status_code=404, detail="Item not found")
+    data[index] = item["value"]
+    save_json(DATA_PATHS["channels"], data)
+    return {"message": "Channel updated"}
 
-@app.delete("/api/channels/{name}")
-def delete_channel(name: str):
-    channels = settings.get_setting("channels") or []
-    channels = [c for c in channels if c != name]
-    settings.update_setting("channels", channels)
-    return {"status": "channel deleted"}
+@app.delete("/channel/{index}")
+def delete_channel(index: int):
+    data = load_json(DATA_PATHS["channels"])
+    if index >= len(data):
+        raise HTTPException(status_code=404, detail="Item not found")
+    data.pop(index)
+    save_json(DATA_PATHS["channels"], data)
+    return {"message": "Channel deleted"}
 
-# ---------------- إدارة الردود الخاصة ----------------
-class SpecialUser(BaseModel):
-    user: str
-    responses: List[str]
-
-@app.get("/api/special")
+# ========== الردود الخاصة ==========
+@app.get("/special-responses")
 def get_special_responses():
-    return settings.get_setting("special_responses") or {}
+    return load_json(DATA_PATHS["special_responses"])
 
-@app.post("/api/special")
-def add_or_update_special_response(item: SpecialUser):
-    specials = settings.get_setting("special_responses") or {}
-    specials[item.user.lower()] = item.responses
-    settings.update_setting("special_responses", specials)
-    return {"status": "special responses updated"}
+@app.put("/special-responses/{index}")
+def update_special_user(index: int, user: dict):
+    data = load_json(DATA_PATHS["special_responses"])
+    if index >= len(data):
+        raise HTTPException(status_code=404, detail="User not found")
+    data[index] = user
+    save_json(DATA_PATHS["special_responses"], data)
+    return {"message": "Special user updated"}
 
-@app.delete("/api/special/{username}")
-def delete_special_user(username: str):
-    specials = settings.get_setting("special_responses") or {}
-    if username.lower() in specials:
-        del specials[username.lower()]
-    settings.update_setting("special_responses", specials)
-    return {"status": "special user deleted"}
+@app.delete("/special-responses/{index}")
+def delete_special_user(index: int):
+    data = load_json(DATA_PATHS["special_responses"])
+    if index >= len(data):
+        raise HTTPException(status_code=404, detail="User not found")
+    data.pop(index)
+    save_json(DATA_PATHS["special_responses"], data)
+    return {"message": "Special user deleted"}
 
-@app.post("/api/special/cleanup")
-def cleanup_specials():
-    specials = settings.get_setting("special_responses") or {}
-    cleaned = {user: resps for user, resps in specials.items() if resps}
-    settings.update_setting("special_responses", cleaned)
-    return {"status": "special responses cleaned"}
+@app.post("/import-special-responses")
+def import_special_responses(users: list):
+    save_json(DATA_PATHS["special_responses"], users)
+    return {"message": "Imported successfully"}
