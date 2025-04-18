@@ -7,9 +7,9 @@
   "mention_limit": 2,
   "mention_guard_warn_msg": "",
   "mention_guard_timeout_msg": "",
-  "mention_guard_duration": 5,
-  "mention_guard_cooldown": 86400,
-  "mention_daily_cooldown": false,
+  "mention_guard_duration": 10,
+  "mention_guard_cooldown": 3600,
+  "mention_daily_cooldown": true,
   "mention_responses": [],
   "special_responses": {},
   "custom_responses": {
