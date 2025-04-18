@@ -1,206 +1,162 @@
 import asyncio
 import random
 from collections import defaultdict
-
-from bot.questions.normal import TeamNormalQuestion
+from bot.questions.normal import NormalQuestion
 from bot.questions.golden import GoldenQuestion
+from bot.questions.steal_or_boost import StealOrBoostTeamQuestion, ChallengeStealOrBoostQuestion
 from bot.questions.sabotage import SabotageQuestion
-from bot.questions.doom import DoomQuestion
 from bot.questions.fate import TestOfFate
-from bot.questions.steal_or_boost import ChallengeStealOrBoostQuestion
-from utils.responses import get_response  # ← عدلناه هنا
+from bot.questions.doom import DoomQuestion
+from utils.responses import get_response
 
 class WiduxEngine:
     def __init__(self, bot):
         self.bot = bot
+        self.channel = None
         self.players = []
-        self.blue_team = []
-        self.red_team = []
-        self.game_mode = None
-        self.leader_selection = False
-        self.blue_mentions = defaultdict(int)
-        self.red_mentions = defaultdict(int)
-        self.blue_leader = None
-        self.red_leader = None
+        self.teams = {"أزرق": [], "أحمر": []}
+        self.leaders = {"أزرق": None, "أحمر": None}
+        self.points = defaultdict(int)
+        self.kicked_players = []  # لاعبين مطرودين
+        self.mode = None
         self.main_player = None
-        self.questions = []
-        self.current_index = 0
-        self.selected_game_mode = None
-        self.waiting_for_normal_count = False
 
     async def handle_message(self, message):
         content = message.content.strip()
-        sender = message.author.name
-
         if content == "وج؟":
-            await message.channel.send("هلا والله! إذا بتلعب لحالك اكتب سولو، إذا ضد الكل اكتب تحدي، وإذا مع ربعك اكتب تيم.")
-            return
+            self.channel = message.channel
+            await message.channel.send("هلا والله! إذا بتلعب لحالك اكتب سولو، إذا ضد الكل تحدي، وإذا مع ربعك تيم.")
+        elif content.lower() in ["سولو", "تحدي", "تيم"]:
+            self.mode = content.lower()
+            if self.mode == "سولو":
+                self.main_player = message.author.name
+                await message.channel.send("حدد عدد الأسئلة من 5 إلى 10.")
+            elif self.mode == "تحدي":
+                await message.channel.send("اكتب R للتسجيل بالتحدي! (معك 15 ثانية)")
+                await self.collect_players(message.channel, "R", 15)
+                await message.channel.send("حدد عدد الأسئلة من 5 إلى 10.")
+            elif self.mode == "تيم":
+                await message.channel.send("اكتب أزرق أو أحمر للانضمام! (معك 20 ثانية)")
+                await self.collect_teams(message.channel, 20)
+                await self.select_leaders(message.channel)
+                await message.channel.send("حدد عدد الأسئلة من 5 إلى 10.")
 
-        if content in ["سولو", "تحدي", "تيم"] and not self.game_mode and not self.waiting_for_normal_count:
-            self.selected_game_mode = content
-            self.main_player = sender
-            self.waiting_for_normal_count = True
-            await message.channel.send("حدد عدد الأسئلة العادية من 5 إلى 10.")
-            return
+        elif content.isdigit() and int(content) in range(5, 11):
+            if self.mode == "تحدي" and len(self.players) < 2:
+                await self.channel.send("لازم يكون فيه لاعبين أكثر من واحد علشان يبدأ التحدي.")
+                return
+            if self.mode == "تيم":
+                if len(self.teams["أزرق"]) < 3 or len(self.teams["أحمر"]) < 3:
+                    await self.channel.send("لازم كل فريق فيه 3 لاعبين أو أكثر علشان نبدأ اللعبة.")
+                    return
 
-        if self.waiting_for_normal_count and content.isdigit():
-            count = int(content)
-            if 5 <= count <= 10:
-                self.waiting_for_normal_count = False
-                self.game_mode = self.selected_game_mode
+            self.normal_questions_count = int(content)
+            await self.start_game()
 
-                if self.game_mode == "سولو":
-                    await message.channel.send("جاري بدء اللعبة...")
-                    await self.start_full_game(message.channel, count)
+    async def collect_players(self, channel, keyword, duration):
+        self.players = []
+        await asyncio.sleep(duration)
 
-                elif self.game_mode == "تحدي":
-                    await message.channel.send("اللي بيلعب يكتب 'R' للتسجيل معكم 15 ثانية!")
-                    await self.register_challenge_players(message.channel, count)
+    async def collect_teams(self, channel, duration):
+        self.teams = {"أزرق": [], "أحمر": []}
+        await asyncio.sleep(duration)
 
-                elif self.game_mode == "تيم":
-                    await message.channel.send("كل واحد يختار فريقه، يكتب 'أزرق' أو 'أحمر' معكم 20 ثانية!")
-                    await self.register_team_players(message.channel, count)
-            else:
-                await message.channel.send("الرجاء اختيار رقم بين 5 و10.")
-            return
+    async def select_leaders(self, channel):
+        for team, members in self.teams.items():
+            if members:
+                self.leaders[team] = random.choice(members)
 
-        if self.game_mode == "تحدي" and content.upper() == 'R' and sender not in self.players:
-            self.players.append(sender)
+    async def start_game(self):
+        channel = self.channel
 
-        if self.game_mode == "تيم" and not self.leader_selection:
-            if content == 'أزرق' and sender not in self.blue_team and sender not in self.red_team:
-                self.blue_team.append(sender)
-            elif content == 'أحمر' and sender not in self.red_team and sender not in self.blue_team:
-                self.red_team.append(sender)
+        for _ in range(self.normal_questions_count):
+            qobj = NormalQuestion(self)
+            await qobj.ask(channel)
+        await asyncio.sleep(2)
 
-        if self.leader_selection and self.game_mode == "تيم":
-            mentioned_players = self.extract_mentions(content)
-            for player in mentioned_players:
-                if player in self.blue_team:
-                    self.blue_mentions[player] += 1
-                elif player in self.red_team:
-                    self.red_mentions[player] += 1
+        golden = GoldenQuestion(self)
+        await golden.ask(channel)
+        await asyncio.sleep(2)
 
-    def extract_mentions(self, text):
-        return [word[1:] for word in text.split() if word.startswith('@')]
-
-    async def register_challenge_players(self, channel, normal_count):
-        await asyncio.sleep(15)
-        if len(self.players) < 2:
-            await self.reset_game(channel, "ما فيه عدد كافي نبدأ فيه التحدي.")
+        if self.mode == "تيم":
+            steal_boost = StealOrBoostTeamQuestion(self)
         else:
-            await channel.send(f"تم تسجيل اللاعبين: {', '.join(self.players)}")
-            await self.start_full_game(channel, normal_count)
+            steal_boost = ChallengeStealOrBoostQuestion(self)
+        await steal_boost.ask(channel)
+        await asyncio.sleep(2)
 
-    async def register_team_players(self, channel, normal_count):
-        await asyncio.sleep(20)
-        if len(self.blue_team) < 3 or len(self.red_team) < 3:
-            await self.reset_game(channel, "لازم ٣ لاعبين على الأقل في كل فريق.")
-        else:
-            await channel.send(f"الفريق الأزرق: {', '.join(self.blue_team)}")
-            await channel.send(f"الفريق الأحمر: {', '.join(self.red_team)}")
-            await self.select_team_leaders(channel, normal_count)
+        if self.mode == "تيم":
+            sabotage = SabotageQuestion(self)
+            await sabotage.ask(channel)
+            await asyncio.sleep(2)
 
-    async def select_team_leaders(self, channel, normal_count):
-        self.leader_selection = True
-        await channel.send("اختاروا الليدر! منشنوه خلال 10 ثواني.")
-        await asyncio.sleep(10)
+        fate = TestOfFate(self)
+        await fate.ask(channel)
+        await asyncio.sleep(2)
 
-        self.blue_leader = max(self.blue_mentions.items(), key=lambda x: x[1])[0] if self.blue_mentions else random.choice(self.blue_team)
-        self.red_leader = max(self.red_mentions.items(), key=lambda x: x[1])[0] if self.red_mentions else random.choice(self.red_team)
+        doom = DoomQuestion(self)
+        await doom.ask(channel)
+        await asyncio.sleep(2)
 
-        await channel.send(f"ليدر الأزرق: {self.blue_leader}")
-        await channel.send(f"ليدر الأحمر: {self.red_leader}")
-        await self.start_full_game(channel, normal_count)
+        await self.finish_game()
 
-    async def start_full_game(self, channel, normal_count):
-        self.questions = []
-        self.questions += [{"type": "normal"}] * normal_count
-        self.questions.append({"type": "golden"})
-        self.questions.append({"type": "steal_or_boost"})
-        self.questions.append({"type": "sabotage"})
-        self.questions.append({"type": "fate"})
-        self.questions.append({"type": "doom"})
+    async def finish_game(self):
+        channel = self.channel
 
-        self.current_index = 0
-        await channel.send("اللعبة بدأت! استعد للسؤال الأول...")
-        await self.ask_next_question(channel)
+        if self.mode == "سولو":
+            player = self.main_player
+            if player not in self.kicked_players:
+                points = self.points.get(player, 0)
+                if points >= 50:
+                    await channel.send(get_response("solo_win_responses", {"player": player}))
+                else:
+                    await channel.send(get_response("below_50_responses", {"player": player}))
 
-    async def ask_next_question(self, channel):
-        if self.current_index >= len(self.questions):
-            await channel.send("انتهت جميع الأسئلة!")
+        elif self.mode == "تحدي":
+            valid_players = {p: pts for p, pts in self.points.items() if p not in self.kicked_players}
+            if not valid_players:
+                await channel.send("مافي نقاط، محد فاز!")
+                return
 
-            if self.game_mode == "سولو":
-                winner = self.main_player
-                msg = get_response("solo_win_responses", context={"player": winner})
-                await channel.send(msg)
+            winner = max(valid_players, key=valid_players.get)
+            points = valid_players[winner]
 
-            elif self.game_mode == "تحدي":
-                winner = self.players[0] if self.players else "لاعب"
-                lose_msg = get_response("group_lose_responses")
-                win_msg = get_response("group_win_responses", context={"player": winner})
-                await channel.send(lose_msg)
-                await channel.send(win_msg)
-
-            elif self.game_mode == "تيم":
-                winning_team = "أزرق"
-                losing_team = "أحمر"
-                win_msg = get_response("team_win_responses", context={"team": winning_team})
-                lose_msg = get_response("team_lose_responses", context={"team": losing_team})
-                await channel.send(win_msg)
-                await channel.send(lose_msg)
-
-            return
-
-        q = self.questions[self.current_index]
-        self.current_index += 1
-
-        try:
-            if q["type"] == "doom":
-                qobj = DoomQuestion()
-                await qobj.ask(channel)
-
-            elif q["type"] == "fate":
-                qobj = TestOfFate()
-                await qobj.ask(channel)
-
-            elif q["type"] == "sabotage":
-                qobj = SabotageQuestion()
-                await qobj.ask(channel)
-
-            elif q["type"] == "steal_or_boost":
-                qobj = ChallengeStealOrBoostQuestion()
-                await qobj.ask(channel)
-
-            elif q["type"] == "golden":
-                qobj = GoldenQuestion()
-                await qobj.ask(channel)
-
-            elif q["type"] == "normal":
-                qobj = TeamNormalQuestion()
-                await qobj.ask(channel)
-
+            if points >= 50:
+                await channel.send(get_response("group_win_responses", {"player": winner}))
             else:
-                await channel.send(f"نوع السؤال غير معروف: {q['type']}")
+                await channel.send(get_response("below_50_responses", {"player": winner}))
 
-        except Exception as e:
-            await channel.send(f"خطأ أثناء تنفيذ السؤال: {str(e)}")
+            for player, pts in valid_players.items():
+                if player != winner and pts < 50:
+                    await channel.send(get_response("below_50_responses", {"player": player}))
 
-    async def reset_game(self, channel=None, notice=None):
-        if channel and notice:
-            await channel.send(notice)
+        elif self.mode == "تيم":
+            team_scores = {"أزرق": 0, "أحمر": 0}
+            for player, pts in self.points.items():
+                if player in self.kicked_players:
+                    continue
+                if player in self.teams.get("أزرق", []):
+                    team_scores["أزرق"] += pts
+                elif player in self.teams.get("أحمر", []):
+                    team_scores["أحمر"] += pts
 
-        self.players.clear()
-        self.blue_team.clear()
-        self.red_team.clear()
-        self.game_mode = None
-        self.leader_selection = False
-        self.blue_mentions.clear()
-        self.red_mentions.clear()
-        self.blue_leader = None
-        self.red_leader = None
-        self.main_player = None
-        self.questions = []
-        self.current_index = 0
-        self.selected_game_mode = None
-        self.waiting_for_normal_count = False
+            winning_team = max(team_scores, key=team_scores.get)
+            losing_team = "أحمر" if winning_team == "أزرق" else "أزرق"
+
+            await channel.send(get_response("team_win_responses", {"team": winning_team}))
+            await channel.send(get_response("team_lose_responses", {"team": losing_team}))
+
+            for player, pts in self.points.items():
+                if player not in self.kicked_players and player in self.teams[losing_team] and pts < 50:
+                    await channel.send(get_response("below_50_responses", {"player": player}))
+
+            for team, leader in self.leaders.items():
+                if leader and leader not in self.kicked_players:
+                    team_players = self.teams.get(team, [])
+                    if team_players:
+                        leader_points = self.points.get(leader, 0)
+                        higher_members = [p for p in team_players if p not in self.kicked_players and self.points.get(p, 0) > leader_points]
+                        if higher_members:
+                            await channel.send(get_response("weak_leader_responses", {"leader": leader}))
+
+        await channel.send("شكرًا لانضمامكم! تم تطوير هذه اللعبة بفكرة وإبداع Wujud © جميع الحقوق محفوظة.")
