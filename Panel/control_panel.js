@@ -22,7 +22,7 @@ function updateMentionSettings() {
     body: JSON.stringify(data),
   })
     .then(() => alert("تم تحديث إعدادات المنشن!"))
-    .catch(err => console.error("خطأ تحديث الإعدادات:", err));
+    .catch(err => console.error("خطأ تحديث إعدادات المنشن:", err));
 }
 
 // ---------------- ردود اللعبة ----------------
@@ -36,7 +36,7 @@ function updateResponse() {
   fetch(`/api/responses/${type}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ responses }),
+    body: JSON.stringify(responses),
   })
     .then(() => alert("تم تحديث الردود بنجاح!"))
     .catch(err => console.error("خطأ تحديث الردود:", err));
@@ -56,7 +56,7 @@ function importResponses() {
       fetch(`/api/responses/${type}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ responses: imported }),
+        body: JSON.stringify(imported),
       })
         .then(() => alert("تم استيراد الردود بنجاح!"))
         .catch(err => console.error("خطأ استيراد الردود:", err));
@@ -77,7 +77,7 @@ function updateMentionReplies() {
   fetch("/api/mention_responses", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ responses }),
+    body: JSON.stringify(responses),
   })
     .then(() => alert("تم تحديث ردود المنشن العامة!"))
     .catch(err => console.error("خطأ تحديث ردود المنشن:", err));
@@ -96,7 +96,7 @@ function importMentionReplies() {
       fetch("/api/mention_responses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ responses: imported }),
+        body: JSON.stringify(imported),
       })
         .then(() => alert("تم استيراد ردود المنشن العامة!"))
         .catch(err => console.error("خطأ استيراد المنشن:", err));
@@ -127,7 +127,7 @@ function addBulkQuestions() {
   fetch("/api/questions/bulk", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ questions }),
+    body: JSON.stringify(questions),
   })
     .then(() => alert("تمت إضافة الأسئلة بنجاح!"))
     .catch(err => console.error("خطأ إضافة الأسئلة:", err));
@@ -142,11 +142,11 @@ function importQuestions() {
   reader.onload = function (e) {
     const content = e.target.result;
     try {
-      const questions = JSON.parse(content);
+      const imported = JSON.parse(content);
       fetch("/api/questions/bulk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ questions }),
+        body: JSON.stringify(imported),
       })
         .then(() => alert("تم استيراد الأسئلة بنجاح!"))
         .catch(err => console.error("خطأ استيراد الأسئلة:", err));
@@ -201,7 +201,7 @@ function addSpecialUser() {
   fetch("/api/special", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ user, responses }),
+    body: JSON.stringify({ username: user, responses }),
   })
     .then(() => {
       alert("تمت إضافة المستخدم!");
@@ -246,12 +246,12 @@ function importSpecials() {
   reader.onload = function (e) {
     const content = e.target.result;
     try {
-      const specials = JSON.parse(content);
-      for (const [user, responses] of Object.entries(specials)) {
+      const imported = JSON.parse(content);
+      for (const [user, responses] of Object.entries(imported)) {
         fetch("/api/special", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user, responses }),
+          body: JSON.stringify({ username: user, responses }),
         });
       }
       alert("تم استيراد الردود الخاصة!");
@@ -277,7 +277,7 @@ function loadSpecials() {
     });
 }
 
-// ---------------- تحميل الإعدادات تلقائي ----------------
+// ---------------- تحميل البيانات تلقائي ----------------
 window.onload = () => {
   loadChannels();
   loadSpecials();
