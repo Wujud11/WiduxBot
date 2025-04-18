@@ -59,6 +59,10 @@ class SabotageQuestion:
             await channel.send("ما تقدر تطرد القائد أو ما تم تحديد ضحية بشكل صحيح.")
             return points
 
+        # ✅✅✅ إضافة هنا فقط:
+        if hasattr(bot, 'engine') and hasattr(bot.engine, 'kicked_players'):
+            bot.engine.kicked_players.append(target)
+
         await channel.send(f"{target} تم طرده من اللعبة.")
 
         msg = get_response("kicked_responses", {"player": target})
