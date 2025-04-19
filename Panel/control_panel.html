@@ -1,43 +1,111 @@
 
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <title>لوحة تحكم WiduxBot</title>
-    <script src="control_panel.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WiduxBot Control Panel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h1>لوحة تحكم WiduxBot</h1>
+<body class="bg-gray-100 text-gray-900 p-6">
 
-    <button onclick="fetchSettings()">تحديث الإعدادات</button>
-    <div id="settings-container"></div>
-    <hr>
+  <h1 class="text-3xl font-bold mb-8 text-center">لوحة تحكم WiduxBot</h1>
 
-    <button onclick="fetchGameResponses()">تحديث ردود اللعبة</button>
-    <button onclick="showAddResponseForm()">إضافة رد لعبة</button>
-    <div id="game-responses-container"></div>
-    <hr>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-    <button onclick="fetchMentionReplies()">تحديث ردود المنشن</button>
-    <button onclick="showAddMentionForm()">إضافة رد منشن</button>
-    <div id="mention-replies-container"></div>
-    <hr>
+    <!-- إعدادات المنشن -->
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-2xl font-bold mb-4">إعدادات المنشن</h2>
+      <div class="flex flex-col gap-4">
+        <input type="number" placeholder="الحد الأقصى للمنشنات" class="border p-2 rounded">
+        <input type="number" placeholder="مدة التايم أوت (بالثواني)" class="border p-2 rounded">
+        <input type="number" placeholder="فترة التهدئة (Cooldown)" class="border p-2 rounded">
+        <input type="text" placeholder="رسالة التحذير" class="border p-2 rounded">
+        <input type="text" placeholder="رسالة التايم أوت" class="border p-2 rounded">
+        <button class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded">حفظ إعدادات المنشن</button>
+      </div>
+    </div>
 
-    <button onclick="fetchQuestions()">تحديث الأسئلة</button>
-    <button onclick="showAddQuestionForm()">إضافة سؤال</button>
-    <div id="questions-container"></div>
-    <hr>
+    <!-- إدارة ردود اللعبة -->
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-2xl font-bold mb-4">إدارة ردود اللعبة</h2>
+      <div class="flex flex-col gap-4">
+        <select class="border p-2 rounded">
+          <option disabled selected>اختر نوع الرد</option>
+          <option>solo_win_responses</option>
+          <option>team_win_responses</option>
+          <option>team_lose_responses</option>
+          <option>group_win_responses</option>
+          <option>group_lose_responses</option>
+          <option>below_50_responses</option>
+          <option>below_zero_responses</option>
+          <option>doomed_leader_responses</option>
+          <option>weak_leader_responses</option>
+          <option>kicked_responses</option>
+          <option>stolen_responses</option>
+        </select>
+        <textarea placeholder="أضف رد جديد" class="border p-2 rounded h-24"></textarea>
+        <button class="bg-green-500 hover:bg-green-600 text-white p-2 rounded">إضافة رد</button>
+      </div>
+    </div>
 
-    <button onclick="fetchChannels()">تحديث القنوات</button>
-    <button onclick="showAddChannelForm()">إضافة قناة</button>
-    <div id="channels-container"></div>
-    <hr>
+    <!-- إدارة الأسئلة -->
+    <div class="bg-white rounded-lg shadow p-6 md:col-span-2">
+      <h2 class="text-2xl font-bold mb-4">إدارة الأسئلة</h2>
+      <div class="flex flex-col gap-4">
 
-    <button onclick="fetchSpecialResponses()">تحديث الردود الخاصة</button>
-    <button onclick="showAddSpecialUserForm()">إضافة رد خاص</button>
-    <div id="special-responses-container"></div>
+        <!-- اختيار نوع السؤال -->
+        <select id="questionType" class="border p-2 rounded">
+          <option disabled selected>اختر نوع السؤال</option>
+          <option>DoomQuestion</option>
+          <option>TestOfFate</option>
+          <option>GoldenQuestion</option>
+          <option>NormalQuestion</option>
+          <option>TeamNormalQuestion</option>
+          <option>SabotageQuestion</option>
+          <option>StealOrBoostTeamQuestion</option>
+          <option>ChallengeStealOrBoostQuestion</option>
+        </select>
 
-    <div id="form-container"></div>
+        <!-- نص السؤال -->
+        <textarea id="questionText" placeholder="أدخل نص السؤال هنا" class="border p-2 rounded h-24"></textarea>
+
+        <!-- الإجابة الصحيحة -->
+        <input type="text" id="correctAnswer" placeholder="الإجابة الصحيحة" class="border p-2 rounded">
+
+        <!-- إجابات بديلة -->
+        <textarea id="alternativeAnswers" placeholder="أدخل الإجابات البديلة (افصلها بفواصل أو أسطر)" class="border p-2 rounded h-24"></textarea>
+
+        <!-- أزرار إدارة الأسئلة -->
+        <div class="flex flex-wrap gap-4">
+          <button class="bg-green-500 hover:bg-green-600 text-white p-2 rounded flex-1">إضافة سؤال</button>
+          <button class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded flex-1">تعديل سؤال</button>
+          <button class="bg-red-500 hover:bg-red-600 text-white p-2 rounded flex-1">حذف سؤال</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- إدارة القنوات -->
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-2xl font-bold mb-4">إدارة القنوات</h2>
+      <div class="flex flex-col gap-4">
+        <input type="text" placeholder="اسم القناة" class="border p-2 rounded">
+        <button class="bg-green-500 hover:bg-green-600 text-white p-2 rounded">إضافة قناة</button>
+      </div>
+    </div>
+
+    <!-- إدارة الردود الخاصة -->
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-2xl font-bold mb-4">إدارة الردود الخاصة</h2>
+      <div class="flex flex-col gap-4">
+        <input type="text" placeholder="اسم المستخدم" class="border p-2 rounded">
+        <textarea placeholder="أدخل الرد الخاص" class="border p-2 rounded h-24"></textarea>
+        <button class="bg-green-500 hover:bg-green-600 text-white p-2 rounded">إضافة رد خاص</button>
+      </div>
+    </div>
+
+  </div>
 
 </body>
 </html>
