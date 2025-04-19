@@ -1,126 +1,137 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
+from typing import List
+import sqlite3
 import os
-import json
 
-# ========= مسارات البيانات ==========
-DATA_PATHS = {
-    "settings": "data/bot_settings.json",
-    "game_responses": "data/game_responses.json",
-    "mention_responses": "data/mention_responses.json",
-    "questions": "data/questions_bank.json",
-    "channels": "data/channels.json",
-    "special_responses": "data/special_responses.json",
-}
-
-# ========= دوال مساعدة للقراءة والكتابة ==========
-def load_json(path):
-    if not os.path.exists(path):
-        return {}
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-def save_json(path, data):
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=4, ensure_ascii=False)
-
-# ========= إنشاء تطبيق FastAPI ==========
+# إنشاء تطبيق FastAPI
 app = FastAPI()
 
-# ========= إعدادات CORS ==========
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# تجهيز مجلد Panel لخدمة الملفات الثابتة
+if not os.path.exists("Panel"):
+    os.makedirs("Panel")
 
-# ========= تقديم الملفات الثابتة (Static Files) ==========
-app.mount("/Panel", StaticFiles(directory="Panel"), name="Panel")
+app.mount("/", StaticFiles(directory="Panel", html=True), name="panel")
 
-# ========= نقطة البداية (فتح واجهة التحكم) ==========
-@app.get("/")
-def read_root():
-    return FileResponse("Panel/control_panel.html")
+# الاتصال بقاعدة البيانات
+def get_db_connection():
+    conn = sqlite3.connect("widux_panel.db")
+    conn.row_factory = sqlite3.Row
+    return conn
 
-# ========= إعدادات البوت ==========
-@app.get("/settings")
-def get_settings():
-    return load_json(DATA_PATHS["settings"])
+# النماذج
+class MentionSettings(BaseModel):
+    limit: int
+    duration: int
+    cooldown: int
+    warn_msg: str
+    timeout_msg: str
 
-@app.post("/settings")
-def update_settings(settings: dict):
-    save_json(DATA_PATHS["settings"], settings)
-    return {"message": "Settings updated successfully"}
+class Question(BaseModel):
+    type: str
+    text: str
+    correct_answer: str
+    alternative_answers: List[str]
 
-# ========= ردود الألعاب ==========
-@app.get("/game-responses")
-def get_game_responses():
-    return load_json(DATA_PATHS["game_responses"])
+class ResponseData(BaseModel):
+    type: str
+    message: str
 
-@app.post("/import-game-responses")
-def import_game_responses(responses: list):
-    save_json(DATA_PATHS["game_responses"], responses)
-    return {"message": "Game responses imported successfully"}
+class ChannelData(BaseModel):
+    name: str
 
-# ========= ردود المنشن ==========
-@app.get("/mention-replies")
-def get_mention_replies():
-    return load_json(DATA_PATHS["mention_responses"])
+class SpecialResponseData(BaseModel):
+    username: str
+    message: str
 
-@app.post("/import-mention-replies")
-def import_mention_replies(responses: list):
-    save_json(DATA_PATHS["mention_responses"], responses)
-    return {"message": "Mention replies imported successfully"}
+# API حفظ إعدادات المنشن
+@app.post("/api/mention-settings")
+async def save_mention_settings(settings: MentionSettings):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM mention_settings")
+    cursor.execute("""
+        INSERT INTO mention_settings (id, limit, duration, cooldown, warn_msg, timeout_msg)
+        VALUES (1, ?, ?, ?, ?, ?)
+    """, (settings.limit, settings.duration, settings.cooldown, settings.warn_msg, settings.timeout_msg))
+    conn.commit()
+    conn.close()
+    return {"message": "تم حفظ إعدادات المنشن بنجاح"}
 
-# ========= بنك الأسئلة ==========
-@app.get("/questions")
-def get_questions():
-    return load_json(DATA_PATHS["questions"])
+# API إضافة سؤال
+@app.post("/api/questions")
+async def add_question(question: Question):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO questions (type, text, correct_answer, alternative_answers)
+        VALUES (?, ?, ?, ?)
+    """, (question.type, question.text, question.correct_answer, ','.join(question.alternative_answers)))
+    conn.commit()
+    question_id = cursor.lastrowid
+    conn.close()
+    return {"message": "تمت إضافة السؤال", "id": question_id}
 
-@app.post("/import-questions")
-def import_questions(questions: list):
-    save_json(DATA_PATHS["questions"], questions)
-    return {"message": "Questions imported successfully"}
+# API تعديل سؤال
+@app.put("/api/questions/{question_id}")
+async def edit_question(question_id: int, question: Question):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE questions
+        SET type = ?, text = ?, correct_answer = ?, alternative_answers = ?
+        WHERE id = ?
+    """, (question.type, question.text, question.correct_answer, ','.join(question.alternative_answers), question_id))
+    conn.commit()
+    conn.close()
+    return {"message": "تم تعديل السؤال"}
 
-# ========= القنوات ==========
-@app.get("/channels")
-def get_channels():
-    return load_json(DATA_PATHS["channels"])
+# API حذف سؤال
+@app.delete("/api/questions/{question_id}")
+async def delete_question(question_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM questions WHERE id = ?", (question_id,))
+    conn.commit()
+    conn.close()
+    return {"message": "تم حذف السؤال"}
 
-@app.put("/channel/{index}")
-def update_channel(index: int, channel: dict):
-    channels = load_json(DATA_PATHS["channels"])
-    if 0 <= index < len(channels):
-        channels[index] = channel
-        save_json(DATA_PATHS["channels"], channels)
-        return {"message": "Channel updated successfully"}
-    return {"error": "Invalid index"}
+# API إضافة رد للعبة
+@app.post("/api/responses")
+async def add_response(response: ResponseData):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO responses (response_type, message)
+        VALUES (?, ?)
+    """, (response.type, response.message))
+    conn.commit()
+    conn.close()
+    return {"message": "تمت إضافة الرد"}
 
-@app.delete("/channel/{index}")
-def delete_channel(index: int):
-    channels = load_json(DATA_PATHS["channels"])
-    if 0 <= index < len(channels):
-        channels.pop(index)
-        save_json(DATA_PATHS["channels"], channels)
-        return {"message": "Channel deleted successfully"}
-    return {"error": "Invalid index"}
+# API إضافة قناة
+@app.post("/api/channels")
+async def add_channel(channel: ChannelData):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO channels (name)
+        VALUES (?)
+    """, (channel.name,))
+    conn.commit()
+    conn.close()
+    return {"message": "تمت إضافة القناة"}
 
-# ========= استيراد قنوات جديدة ==========
-@app.post("/import-channels")
-def import_channels(channels: list):
-    save_json(DATA_PATHS["channels"], channels)
-    return {"message": "Channels imported successfully"}
-
-# ========= الردود الخاصة ==========
-@app.get("/special-responses")
-def get_special_responses():
-    return load_json(DATA_PATHS["special_responses"])
-
-@app.post("/import-special-responses")
-def import_special_responses(responses: list):
-    save_json(DATA_PATHS["special_responses"], responses)
-    return {"message": "Special responses imported successfully"}
+# API إضافة رد خاص
+@app.post("/api/special-responses")
+async def add_special_response(special: SpecialResponseData):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO special_responses (username, message)
+        VALUES (?, ?)
+    """, (special.username, special.message))
+    conn.commit()
+    conn.close()
+    return {"message": "تمت إضافة الرد الخاص"}
