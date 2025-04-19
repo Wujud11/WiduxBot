@@ -1,6 +1,7 @@
 
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from typing import List
 import sqlite3
@@ -9,175 +10,62 @@ import os
 # إنشاء تطبيق FastAPI
 app = FastAPI()
 
+# ربط الجذر
+@app.get("/")
+async def root():
+    return RedirectResponse(url="/control_panel.html")
+
 # تجهيز مجلد Panel لخدمة الملفات الثابتة
 if not os.path.exists("Panel"):
     os.makedirs("Panel")
 
 app.mount("/", StaticFiles(directory="Panel", html=True), name="panel")
 
-# الاتصال بقاعدة البيانات
+# الاتصال بالقاعدة
 def get_db_connection():
     conn = sqlite3.connect("widux_panel.db")
     conn.row_factory = sqlite3.Row
     return conn
 
+# إنشاء جدول الإعدادات إذا ماكان موجود
+def init_db():
+    conn = get_db_connection()
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS panel_settings (
+            section TEXT PRIMARY KEY,
+            content TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+init_db()
+
 # النماذج
-class MentionSettings(BaseModel):
-    limit: int
-    duration: int
-    cooldown: int
-    warn_msg: str
-    timeout_msg: str
+class SectionData(BaseModel):
+    section: str
+    content: str
 
-class Question(BaseModel):
-    type: str
-    text: str
-    correct_answer: str
-    alternative_answers: List[str]
-
-class ResponseData(BaseModel):
-    type: str
-    message: str
-
-class ChannelData(BaseModel):
-    name: str
-
-class SpecialResponseData(BaseModel):
-    username: str
-    message: str
-
-# ========== [ API المسارات ] ==========
-
-# API حفظ إعدادات المنشن
-@app.post("/api/mention-settings")
-async def save_mention_settings(settings: MentionSettings):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM mention_settings")
-    cursor.execute("""
-        INSERT INTO mention_settings (id, limit, duration, cooldown, warn_msg, timeout_msg)
-        VALUES (1, ?, ?, ?, ?, ?)
-    """, (settings.limit, settings.duration, settings.cooldown, settings.warn_msg, settings.timeout_msg))
-    conn.commit()
-    conn.close()
-    return {"message": "تم حفظ إعدادات المنشن بنجاح"}
-
-# API استرجاع إعدادات المنشن
-@app.get("/api/mention-settings")
-async def get_mention_settings():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM mention_settings WHERE id = 1")
-    row = cursor.fetchone()
-    conn.close()
-    if row:
-        return dict(row)
-    else:
-        raise HTTPException(status_code=404, detail="Mention settings not found")
-
-# API إضافة سؤال
-@app.post("/api/questions")
-async def add_question(question: Question):
+# حفظ قسم
+@app.post("/api/save")
+async def save_section(data: SectionData):
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO questions (type, text, correct_answer, alternative_answers)
-        VALUES (?, ?, ?, ?)
-    """, (question.type, question.text, question.correct_answer, ','.join(question.alternative_answers)))
-    conn.commit()
-    question_id = cursor.lastrowid
-    conn.close()
-    return {"message": "تمت إضافة السؤال", "id": question_id}
-
-# API استرجاع كل الأسئلة
-@app.get("/api/questions")
-async def get_questions():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM questions")
-    rows = cursor.fetchall()
-    conn.close()
-    return [dict(row) for row in rows]
-
-# API تعديل سؤال
-@app.put("/api/questions/{question_id}")
-async def edit_question(question_id: int, question: Question):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        UPDATE questions
-        SET type = ?, text = ?, correct_answer = ?, alternative_answers = ?
-        WHERE id = ?
-    """, (question.type, question.text, question.correct_answer, ','.join(question.alternative_answers), question_id))
-    conn.commit()
-    conn.close()
-    return {"message": "تم تعديل السؤال"}
-
-# API حذف سؤال
-@app.delete("/api/questions/{question_id}")
-async def delete_question(question_id: int):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM questions WHERE id = ?", (question_id,))
-    conn.commit()
-    conn.close()
-    return {"message": "تم حذف السؤال"}
-
-# API إضافة رد للعبة
-@app.post("/api/responses")
-async def add_response(response: ResponseData):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO responses (response_type, message)
+        INSERT INTO panel_settings (section, content) 
         VALUES (?, ?)
-    """, (response.type, response.message))
+        ON CONFLICT(section) DO UPDATE SET content=excluded.content
+    """, (data.section, data.content))
     conn.commit()
     conn.close()
-    return {"message": "تمت إضافة الرد"}
+    return {"message": "تم حفظ البيانات"}
 
-# API إضافة قناة
-@app.post("/api/channels")
-async def add_channel(channel: ChannelData):
+# استرجاع كل الإعدادات
+@app.get("/api/get-settings")
+async def get_all_settings():
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO channels (name)
-        VALUES (?)
-    """, (channel.name,))
-    conn.commit()
-    conn.close()
-    return {"message": "تمت إضافة القناة"}
-
-# API استرجاع كل القنوات
-@app.get("/api/channels")
-async def get_channels():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM channels")
+    cursor.execute("SELECT * FROM panel_settings")
     rows = cursor.fetchall()
     conn.close()
-    return [dict(row) for row in rows]
-
-# API إضافة رد خاص
-@app.post("/api/special-responses")
-async def add_special_response(special: SpecialResponseData):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO special_responses (username, message)
-        VALUES (?, ?)
-    """, (special.username, special.message))
-    conn.commit()
-    conn.close()
-    return {"message": "تمت إضافة الرد الخاص"}
-
-# API استرجاع كل الردود الخاصة
-@app.get("/api/special-responses")
-async def get_special_responses():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM special_responses")
-    rows = cursor.fetchall()
-    conn.close()
-    return [dict(row) for row in rows]
+    return {row["section"]: row["content"] for row in rows}
