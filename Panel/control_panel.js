@@ -1,109 +1,92 @@
+<script>
+// تحميل الداتا عند فتح الصفحة
+window.addEventListener('DOMContentLoaded', loadData);
 
-// إعدادات المنشن
-async function saveMentionSettings() {
-  const data = {
-    limit: parseInt(document.getElementById('mentionLimit').value),
-    duration: parseInt(document.getElementById('timeoutDuration').value),
-    cooldown: parseInt(document.getElementById('cooldownPeriod').value),
-    warn_msg: document.getElementById('warnMessage').value,
-    timeout_msg: document.getElementById('timeoutMessage').value
-  };
+function loadData() {
+  fetch('/api/load') // أو المسار الصحيح عندك
+    .then(response => response.json())
+    .then(data => {
+      for (const section in data) {
+        const textarea = document.querySelector(`#${section} textarea`);
+        if (textarea) {
+          textarea.value = data[section];
+        }
+      }
+    })
+    .catch(error => {
+      console.error(error);
+      showToast('خطأ في تحميل البيانات', 'error');
+    });
+}
 
-  const response = await fetch('/api/mention-settings', {
+// حفظ داتا قسم معين
+function saveSection(sectionId) {
+  const textarea = document.querySelector(`#${sectionId} textarea`);
+  if (!textarea) return;
+
+  const data = textarea.value.trim();
+
+  if (!data) {
+    showToast('لا يمكن حفظ نص فارغ!', 'error');
+    return;
+  }
+
+  fetch('/api/save', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
+    body: JSON.stringify({ section: sectionId, content: data })
+  })
+  .then(response => response.json())
+  .then(result => {
+    if (result.success) {
+      showToast('تم حفظ البيانات بنجاح', 'success');
+    } else {
+      showToast('خطأ أثناء الحفظ', 'error');
+    }
+  })
+  .catch(error => {
+    console.error(error);
+    showToast('فشل الاتصال بالخادم', 'error');
   });
-  const result = await response.json();
-  alert(result.message || 'تم حفظ إعدادات المنشن بنجاح');
 }
 
-// إضافة رد لعبة
-async function addResponse() {
-  const type = document.getElementById('responseType').value;
-  const message = document.getElementById('newResponse').value;
+// عرض إشعارات (توستات) احترافية
+function showToast(message, type) {
+  const toast = document.createElement('div');
+  toast.textContent = message;
+  toast.style.position = 'fixed';
+  toast.style.bottom = '20px';
+  toast.style.left = '50%';
+  toast.style.transform = 'translateX(-50%)';
+  toast.style.padding = '12px 24px';
+  toast.style.backgroundColor = type === 'success' ? '#4caf50' : '#e53935';
+  toast.style.color = 'white';
+  toast.style.borderRadius = '8px';
+  toast.style.fontWeight = 'bold';
+  toast.style.opacity = '0';
+  toast.style.transition = 'opacity 0.5s';
+  document.body.appendChild(toast);
 
-  const data = { type, message };
+  setTimeout(() => {
+    toast.style.opacity = '1';
+  }, 100);
 
-  const response = await fetch('/api/responses', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  });
-  const result = await response.json();
-  alert(result.message || 'تمت إضافة الرد بنجاح');
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    setTimeout(() => {
+      toast.remove();
+    }, 500);
+  }, 3000);
 }
 
-// إدارة الأسئلة
-async function addQuestion() {
-  const type = document.getElementById('questionType').value;
-  const text = document.getElementById('questionText').value;
-  const correct = document.getElementById('correctAnswer').value;
-  const alternatives = document.getElementById('alternativeAnswers').value.split('\n').map(x => x.trim());
-
-  const data = { type, text, correct_answer: correct, alternative_answers: alternatives };
-
-  const response = await fetch('/api/questions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
+// التنقل الناعم بالسلاسة للأقسام
+document.querySelectorAll('aside a').forEach(link => {
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(link.getAttribute('href'));
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth' });
+    }
   });
-  const result = await response.json();
-  alert(result.message || 'تمت إضافة السؤال بنجاح');
-}
-
-async function editQuestion(id) {
-  const type = document.getElementById('questionType').value;
-  const text = document.getElementById('questionText').value;
-  const correct = document.getElementById('correctAnswer').value;
-  const alternatives = document.getElementById('alternativeAnswers').value.split('\n').map(x => x.trim());
-
-  const data = { type, text, correct_answer: correct, alternative_answers: alternatives };
-
-  const response = await fetch(`/api/questions/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  });
-  const result = await response.json();
-  alert(result.message || 'تم تعديل السؤال بنجاح');
-}
-
-async function deleteQuestion(id) {
-  const response = await fetch(`/api/questions/${id}`, {
-    method: 'DELETE'
-  });
-  const result = await response.json();
-  alert(result.message || 'تم حذف السؤال');
-}
-
-// إضافة قناة
-async function addChannel() {
-  const name = document.getElementById('channelName').value;
-
-  const data = { name };
-
-  const response = await fetch('/api/channels', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  });
-  const result = await response.json();
-  alert(result.message || 'تمت إضافة القناة');
-}
-
-// إضافة رد خاص
-async function addSpecialResponse() {
-  const username = document.getElementById('specialUser').value;
-  const message = document.getElementById('specialResponse').value;
-
-  const data = { username, message };
-
-  const response = await fetch('/api/special-responses', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  });
-  const result = await response.json();
-  alert(result.message || 'تمت إضافة الرد الخاص');
-}
+});
+</script>
