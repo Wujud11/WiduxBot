@@ -1,3 +1,4 @@
+
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -45,6 +46,8 @@ class SpecialResponseData(BaseModel):
     username: str
     message: str
 
+# ========== [ API المسارات ] ==========
+
 # API حفظ إعدادات المنشن
 @app.post("/api/mention-settings")
 async def save_mention_settings(settings: MentionSettings):
@@ -59,6 +62,19 @@ async def save_mention_settings(settings: MentionSettings):
     conn.close()
     return {"message": "تم حفظ إعدادات المنشن بنجاح"}
 
+# API استرجاع إعدادات المنشن
+@app.get("/api/mention-settings")
+async def get_mention_settings():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM mention_settings WHERE id = 1")
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return dict(row)
+    else:
+        raise HTTPException(status_code=404, detail="Mention settings not found")
+
 # API إضافة سؤال
 @app.post("/api/questions")
 async def add_question(question: Question):
@@ -72,6 +88,16 @@ async def add_question(question: Question):
     question_id = cursor.lastrowid
     conn.close()
     return {"message": "تمت إضافة السؤال", "id": question_id}
+
+# API استرجاع كل الأسئلة
+@app.get("/api/questions")
+async def get_questions():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM questions")
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
 
 # API تعديل سؤال
 @app.put("/api/questions/{question_id}")
@@ -123,6 +149,16 @@ async def add_channel(channel: ChannelData):
     conn.close()
     return {"message": "تمت إضافة القناة"}
 
+# API استرجاع كل القنوات
+@app.get("/api/channels")
+async def get_channels():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM channels")
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
 # API إضافة رد خاص
 @app.post("/api/special-responses")
 async def add_special_response(special: SpecialResponseData):
@@ -135,3 +171,13 @@ async def add_special_response(special: SpecialResponseData):
     conn.commit()
     conn.close()
     return {"message": "تمت إضافة الرد الخاص"}
+
+# API استرجاع كل الردود الخاصة
+@app.get("/api/special-responses")
+async def get_special_responses():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM special_responses")
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
