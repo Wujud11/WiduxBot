@@ -17,12 +17,12 @@
     <div class="bg-white rounded-lg shadow p-6">
       <h2 class="text-2xl font-bold mb-4">إعدادات المنشن</h2>
       <div class="flex flex-col gap-4">
-        <input type="number" placeholder="الحد الأقصى للمنشنات" class="border p-2 rounded">
-        <input type="number" placeholder="مدة التايم أوت (بالثواني)" class="border p-2 rounded">
-        <input type="number" placeholder="فترة التهدئة (Cooldown)" class="border p-2 rounded">
-        <input type="text" placeholder="رسالة التحذير" class="border p-2 rounded">
-        <input type="text" placeholder="رسالة التايم أوت" class="border p-2 rounded">
-        <button class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded">حفظ إعدادات المنشن</button>
+        <input id="mentionLimit" type="number" placeholder="الحد الأقصى للمنشنات" class="border p-2 rounded">
+        <input id="timeoutDuration" type="number" placeholder="مدة التايم أوت (بالثواني)" class="border p-2 rounded">
+        <input id="cooldownPeriod" type="number" placeholder="فترة التهدئة (Cooldown)" class="border p-2 rounded">
+        <input id="warnMessage" type="text" placeholder="رسالة التحذير" class="border p-2 rounded">
+        <input id="timeoutMessage" type="text" placeholder="رسالة التايم أوت" class="border p-2 rounded">
+        <button onclick="saveMentionSettings()" class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded">حفظ إعدادات المنشن</button>
       </div>
     </div>
 
@@ -30,7 +30,7 @@
     <div class="bg-white rounded-lg shadow p-6">
       <h2 class="text-2xl font-bold mb-4">إدارة ردود اللعبة</h2>
       <div class="flex flex-col gap-4">
-        <select class="border p-2 rounded">
+        <select id="responseType" class="border p-2 rounded">
           <option disabled selected>اختر نوع الرد</option>
           <option>solo_win_responses</option>
           <option>team_win_responses</option>
@@ -44,8 +44,8 @@
           <option>kicked_responses</option>
           <option>stolen_responses</option>
         </select>
-        <textarea placeholder="أضف رد جديد" class="border p-2 rounded h-24"></textarea>
-        <button class="bg-green-500 hover:bg-green-600 text-white p-2 rounded">إضافة رد</button>
+        <textarea id="newResponse" placeholder="أضف رد جديد" class="border p-2 rounded h-24"></textarea>
+        <button onclick="addResponse()" class="bg-green-500 hover:bg-green-600 text-white p-2 rounded">إضافة رد</button>
       </div>
     </div>
 
@@ -71,16 +71,16 @@
         <textarea id="questionText" placeholder="أدخل نص السؤال هنا" class="border p-2 rounded h-24"></textarea>
 
         <!-- الإجابة الصحيحة -->
-        <input type="text" id="correctAnswer" placeholder="الإجابة الصحيحة" class="border p-2 rounded">
+        <input id="correctAnswer" type="text" placeholder="الإجابة الصحيحة" class="border p-2 rounded">
 
         <!-- إجابات بديلة -->
         <textarea id="alternativeAnswers" placeholder="أدخل الإجابات البديلة (افصلها بفواصل أو أسطر)" class="border p-2 rounded h-24"></textarea>
 
         <!-- أزرار إدارة الأسئلة -->
         <div class="flex flex-wrap gap-4">
-          <button class="bg-green-500 hover:bg-green-600 text-white p-2 rounded flex-1">إضافة سؤال</button>
-          <button class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded flex-1">تعديل سؤال</button>
-          <button class="bg-red-500 hover:bg-red-600 text-white p-2 rounded flex-1">حذف سؤال</button>
+          <button onclick="addQuestion()" class="bg-green-500 hover:bg-green-600 text-white p-2 rounded flex-1">إضافة سؤال</button>
+          <button onclick="editQuestion(اختار_id)" class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded flex-1">تعديل سؤال</button>
+          <button onclick="deleteQuestion(اختار_id)" class="bg-red-500 hover:bg-red-600 text-white p-2 rounded flex-1">حذف سؤال</button>
         </div>
 
       </div>
@@ -90,8 +90,8 @@
     <div class="bg-white rounded-lg shadow p-6">
       <h2 class="text-2xl font-bold mb-4">إدارة القنوات</h2>
       <div class="flex flex-col gap-4">
-        <input type="text" placeholder="اسم القناة" class="border p-2 rounded">
-        <button class="bg-green-500 hover:bg-green-600 text-white p-2 rounded">إضافة قناة</button>
+        <input id="channelName" type="text" placeholder="اسم القناة" class="border p-2 rounded">
+        <button onclick="addChannel()" class="bg-green-500 hover:bg-green-600 text-white p-2 rounded">إضافة قناة</button>
       </div>
     </div>
 
@@ -99,13 +99,56 @@
     <div class="bg-white rounded-lg shadow p-6">
       <h2 class="text-2xl font-bold mb-4">إدارة الردود الخاصة</h2>
       <div class="flex flex-col gap-4">
-        <input type="text" placeholder="اسم المستخدم" class="border p-2 rounded">
-        <textarea placeholder="أدخل الرد الخاص" class="border p-2 rounded h-24"></textarea>
-        <button class="bg-green-500 hover:bg-green-600 text-white p-2 rounded">إضافة رد خاص</button>
+        <input id="specialUser" type="text" placeholder="اسم المستخدم" class="border p-2 rounded">
+        <textarea id="specialResponse" placeholder="أدخل الرد الخاص" class="border p-2 rounded h-24"></textarea>
+        <button onclick="addSpecialResponse()" class="bg-green-500 hover:bg-green-600 text-white p-2 rounded">إضافة رد خاص</button>
       </div>
     </div>
 
   </div>
+
+<script>
+// السكربت كله هنا تحت
+async function addQuestion() {
+  const type = document.getElementById('questionType').value;
+  const text = document.getElementById('questionText').value;
+  const correct = document.getElementById('correctAnswer').value;
+  const alternatives = document.getElementById('alternativeAnswers').value.split('\n').map(x => x.trim());
+  const data = { type, text, correct_answer: correct, alternative_answers: alternatives };
+
+  const response = await fetch('/api/questions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  const result = await response.json();
+  alert(result.message || 'تمت إضافة السؤال بنجاح');
+}
+
+async function editQuestion(id) {
+  const type = document.getElementById('questionType').value;
+  const text = document.getElementById('questionText').value;
+  const correct = document.getElementById('correctAnswer').value;
+  const alternatives = document.getElementById('alternativeAnswers').value.split('\n').map(x => x.trim());
+  const data = { type, text, correct_answer: correct, alternative_answers: alternatives };
+
+  const response = await fetch(`/api/questions/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  const result = await response.json();
+  alert(result.message || 'تم تعديل السؤال بنجاح');
+}
+
+async function deleteQuestion(id) {
+  const response = await fetch(`/api/questions/${id}`, {
+    method: 'DELETE'
+  });
+  const result = await response.json();
+  alert(result.message || 'تم حذف السؤال');
+}
+</script>
 
 </body>
 </html>
