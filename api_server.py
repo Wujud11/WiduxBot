@@ -1,8 +1,12 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 import json
 import os
 
 app = FastAPI()
+
+# ---------------------------------------
+# قنوات
+# ---------------------------------------
 
 CHANNELS_FILE = 'data/channels.json'
 
@@ -20,7 +24,6 @@ def save_channels(channels):
 async def get_channels():
     channels = load_channels()
     return {"channels": channels}
-    from fastapi import Request
 
 @app.post("/api/channels/add")
 async def add_channel(request: Request):
@@ -28,21 +31,19 @@ async def add_channel(request: Request):
     channel = data.get('channel')
     if not channel:
         return {"success": False, "error": "اسم القناة مفقود"}
-    
     channels = load_channels()
     if channel in channels:
         return {"success": False, "error": "القناة موجودة بالفعل"}
-    
     channels.append(channel)
     save_channels(channels)
     return {"success": True}
-    @app.post("/api/channels/delete")
+
+@app.post("/api/channels/delete")
 async def delete_channel(request: Request):
     data = await request.json()
     channel = data.get('channel')
     if not channel:
         return {"success": False, "error": "اسم القناة مفقود"}
-    
     channels = load_channels()
     if channel in channels:
         channels.remove(channel)
@@ -50,47 +51,64 @@ async def delete_channel(request: Request):
         return {"success": True}
     else:
         return {"success": False, "error": "القناة غير موجودة"}
-        @app.get("/api/settings")
+
+# ---------------------------------------
+# إعدادات المنشن
+# ---------------------------------------
+
+@app.get("/api/settings")
 async def get_settings():
     settings_path = 'data/bot_settings.json'
     if not os.path.exists(settings_path):
         return {}
     with open(settings_path, 'r', encoding='utf-8') as f:
         return json.load(f)
-        @app.post("/api/settings")
+
+@app.post("/api/settings")
 async def save_settings(request: Request):
     data = await request.json()
     settings_path = 'data/bot_settings.json'
     with open(settings_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
     return {"success": True}
-    @app.get("/api/mention_replies")
+
+# ---------------------------------------
+# الردود العامة للمنشن
+# ---------------------------------------
+
+@app.get("/api/mention_replies")
 async def get_mention_replies():
     replies_path = 'data/mention_responses.json'
     if not os.path.exists(replies_path):
         return {"mention_general_responses": []}
     with open(replies_path, 'r', encoding='utf-8') as f:
         return json.load(f)
-        @app.post("/api/mention_replies")
+
+@app.post("/api/mention_replies")
 async def save_mention_replies(request: Request):
     data = await request.json()
     replies_path = 'data/mention_responses.json'
     with open(replies_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
     return {"success": True}
-    @app.get("/api/special_replies")
+
+# ---------------------------------------
+# الردود الخاصة
+# ---------------------------------------
+
+@app.get("/api/special_replies")
 async def get_special_replies():
     path = 'data/special_responses.json'
     if not os.path.exists(path):
         return {"special_mentions": {}}
     with open(path, 'r', encoding='utf-8') as f:
         return json.load(f)
-      @app.post("/api/special_replies/add")
+
+@app.post("/api/special_replies/add")
 async def add_special_reply(request: Request):
     data = await request.json()
     username = data.get('username')
     replies = data.get('replies')
-
     if not username or not isinstance(replies, list):
         return {"success": False, "error": "بيانات غير مكتملة"}
 
@@ -102,16 +120,15 @@ async def add_special_reply(request: Request):
         special_data = {"special_mentions": {}}
 
     special_data["special_mentions"][username] = replies
-
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(special_data, f, indent=4, ensure_ascii=False)
 
     return {"success": True}
+
 @app.post("/api/special_replies/delete")
 async def delete_special_reply(request: Request):
     data = await request.json()
     username = data.get('username')
-
     if not username:
         return {"success": False, "error": "اسم المستخدم مفقود"}
 
@@ -129,18 +146,23 @@ async def delete_special_reply(request: Request):
         return {"success": True}
     else:
         return {"success": False, "error": "المستخدم غير موجود"}
-        @app.get("/api/questions")
+
+# ---------------------------------------
+# إدارة الأسئلة
+# ---------------------------------------
+
+@app.get("/api/questions")
 async def get_questions():
     path = 'data/questions_bank.json'
     if not os.path.exists(path):
         return []
     with open(path, 'r', encoding='utf-8') as f:
         return json.load(f)
-        @app.post("/api/questions/add")
+
+@app.post("/api/questions/add")
 async def add_question(request: Request):
     data = await request.json()
     required_fields = ["question", "answer", "alternatives", "type"]
-
     if not all(field in data for field in required_fields):
         return {"success": False, "error": "بيانات السؤال ناقصة"}
 
@@ -152,12 +174,12 @@ async def add_question(request: Request):
         questions = []
 
     questions.append(data)
-
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(questions, f, indent=4, ensure_ascii=False)
 
     return {"success": True}
-    @app.post("/api/questions/delete")
+
+@app.post("/api/questions/delete")
 async def delete_question(request: Request):
     data = await request.json()
     index = data.get('index')
@@ -179,18 +201,24 @@ async def delete_question(request: Request):
         return {"success": True}
     else:
         return {"success": False, "error": "رقم السؤال غير صالح"}
-        @app.get("/api/game_responses/get")
+
+# ---------------------------------------
+# ردود اللعبة والطقطقة
+# ---------------------------------------
+
+@app.get("/api/game_responses/get")
 async def get_game_responses(type: str):
     path = 'data/game_responses.json'
     if not os.path.exists(path):
         return {"responses": []}
-    
+
     with open(path, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
     responses = data.get(type, [])
     return {"responses": responses}
-    @app.post("/api/game_responses/save")
+
+@app.post("/api/game_responses/save")
 async def save_game_responses(request: Request):
     data = await request.json()
     type_ = data.get('type')
@@ -207,9 +235,7 @@ async def save_game_responses(request: Request):
         current_data = {}
 
     current_data[type_] = responses
-
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(current_data, f, indent=4, ensure_ascii=False)
 
     return {"success": True}
-    
