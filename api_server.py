@@ -1,71 +1,215 @@
-
-from fastapi import FastAPI, HTTPException
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import RedirectResponse
-from pydantic import BaseModel
-from typing import List
-import sqlite3
+from fastapi import FastAPI
+import json
 import os
 
-# إنشاء تطبيق FastAPI
 app = FastAPI()
 
-# ربط الجذر
-@app.get("/")
-async def root():
-    return RedirectResponse(url="/control_panel.html")
+CHANNELS_FILE = 'data/channels.json'
 
-# تجهيز مجلد Panel لخدمة الملفات الثابتة
-if not os.path.exists("Panel"):
-    os.makedirs("Panel")
+def load_channels():
+    if not os.path.exists(CHANNELS_FILE):
+        return []
+    with open(CHANNELS_FILE, 'r', encoding='utf-8') as f:
+        return json.load(f)
 
-app.mount("/", StaticFiles(directory="Panel", html=True), name="panel")
+def save_channels(channels):
+    with open(CHANNELS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(channels, f, ensure_ascii=False, indent=4)
 
-# الاتصال بالقاعدة
-def get_db_connection():
-    conn = sqlite3.connect("widux_panel.db")
-    conn.row_factory = sqlite3.Row
-    return conn
+@app.get("/api/channels")
+async def get_channels():
+    channels = load_channels()
+    return {"channels": channels}
+    from fastapi import Request
 
-# إنشاء جدول الإعدادات إذا ماكان موجود
-def init_db():
-    conn = get_db_connection()
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS panel_settings (
-            section TEXT PRIMARY KEY,
-            content TEXT
-        )
-    """)
-    conn.commit()
-    conn.close()
+@app.post("/api/channels/add")
+async def add_channel(request: Request):
+    data = await request.json()
+    channel = data.get('channel')
+    if not channel:
+        return {"success": False, "error": "اسم القناة مفقود"}
+    
+    channels = load_channels()
+    if channel in channels:
+        return {"success": False, "error": "القناة موجودة بالفعل"}
+    
+    channels.append(channel)
+    save_channels(channels)
+    return {"success": True}
+    @app.post("/api/channels/delete")
+async def delete_channel(request: Request):
+    data = await request.json()
+    channel = data.get('channel')
+    if not channel:
+        return {"success": False, "error": "اسم القناة مفقود"}
+    
+    channels = load_channels()
+    if channel in channels:
+        channels.remove(channel)
+        save_channels(channels)
+        return {"success": True}
+    else:
+        return {"success": False, "error": "القناة غير موجودة"}
+        @app.get("/api/settings")
+async def get_settings():
+    settings_path = 'data/bot_settings.json'
+    if not os.path.exists(settings_path):
+        return {}
+    with open(settings_path, 'r', encoding='utf-8') as f:
+        return json.load(f)
+        @app.post("/api/settings")
+async def save_settings(request: Request):
+    data = await request.json()
+    settings_path = 'data/bot_settings.json'
+    with open(settings_path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
+    return {"success": True}
+    @app.get("/api/mention_replies")
+async def get_mention_replies():
+    replies_path = 'data/mention_responses.json'
+    if not os.path.exists(replies_path):
+        return {"mention_general_responses": []}
+    with open(replies_path, 'r', encoding='utf-8') as f:
+        return json.load(f)
+        @app.post("/api/mention_replies")
+async def save_mention_replies(request: Request):
+    data = await request.json()
+    replies_path = 'data/mention_responses.json'
+    with open(replies_path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
+    return {"success": True}
+    @app.get("/api/special_replies")
+async def get_special_replies():
+    path = 'data/special_responses.json'
+    if not os.path.exists(path):
+        return {"special_mentions": {}}
+    with open(path, 'r', encoding='utf-8') as f:
+        return json.load(f)
+      @app.post("/api/special_replies/add")
+async def add_special_reply(request: Request):
+    data = await request.json()
+    username = data.get('username')
+    replies = data.get('replies')
 
-init_db()
+    if not username or not isinstance(replies, list):
+        return {"success": False, "error": "بيانات غير مكتملة"}
 
-# النماذج
-class SectionData(BaseModel):
-    section: str
-    content: str
+    path = 'data/special_responses.json'
+    if os.path.exists(path):
+        with open(path, 'r', encoding='utf-8') as f:
+            special_data = json.load(f)
+    else:
+        special_data = {"special_mentions": {}}
 
-# حفظ قسم
-@app.post("/api/save")
-async def save_section(data: SectionData):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO panel_settings (section, content) 
-        VALUES (?, ?)
-        ON CONFLICT(section) DO UPDATE SET content=excluded.content
-    """, (data.section, data.content))
-    conn.commit()
-    conn.close()
-    return {"message": "تم حفظ البيانات"}
+    special_data["special_mentions"][username] = replies
 
-# استرجاع كل الإعدادات
-@app.get("/api/get-settings")
-async def get_all_settings():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM panel_settings")
-    rows = cursor.fetchall()
-    conn.close()
-    return {row["section"]: row["content"] for row in rows}
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(special_data, f, indent=4, ensure_ascii=False)
+
+    return {"success": True}
+@app.post("/api/special_replies/delete")
+async def delete_special_reply(request: Request):
+    data = await request.json()
+    username = data.get('username')
+
+    if not username:
+        return {"success": False, "error": "اسم المستخدم مفقود"}
+
+    path = 'data/special_responses.json'
+    if not os.path.exists(path):
+        return {"success": False, "error": "لا توجد ردود خاصة"}
+
+    with open(path, 'r', encoding='utf-8') as f:
+        special_data = json.load(f)
+
+    if username in special_data.get("special_mentions", {}):
+        del special_data["special_mentions"][username]
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(special_data, f, indent=4, ensure_ascii=False)
+        return {"success": True}
+    else:
+        return {"success": False, "error": "المستخدم غير موجود"}
+        @app.get("/api/questions")
+async def get_questions():
+    path = 'data/questions_bank.json'
+    if not os.path.exists(path):
+        return []
+    with open(path, 'r', encoding='utf-8') as f:
+        return json.load(f)
+        @app.post("/api/questions/add")
+async def add_question(request: Request):
+    data = await request.json()
+    required_fields = ["question", "answer", "alternatives", "type"]
+
+    if not all(field in data for field in required_fields):
+        return {"success": False, "error": "بيانات السؤال ناقصة"}
+
+    path = 'data/questions_bank.json'
+    if os.path.exists(path):
+        with open(path, 'r', encoding='utf-8') as f:
+            questions = json.load(f)
+    else:
+        questions = []
+
+    questions.append(data)
+
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(questions, f, indent=4, ensure_ascii=False)
+
+    return {"success": True}
+    @app.post("/api/questions/delete")
+async def delete_question(request: Request):
+    data = await request.json()
+    index = data.get('index')
+
+    if index is None:
+        return {"success": False, "error": "رقم السؤال مفقود"}
+
+    path = 'data/questions_bank.json'
+    if not os.path.exists(path):
+        return {"success": False, "error": "لا توجد أسئلة"}
+
+    with open(path, 'r', encoding='utf-8') as f:
+        questions = json.load(f)
+
+    if 0 <= index < len(questions):
+        del questions[index]
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(questions, f, indent=4, ensure_ascii=False)
+        return {"success": True}
+    else:
+        return {"success": False, "error": "رقم السؤال غير صالح"}
+        @app.get("/api/game_responses/get")
+async def get_game_responses(type: str):
+    path = 'data/game_responses.json'
+    if not os.path.exists(path):
+        return {"responses": []}
+    
+    with open(path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+
+    responses = data.get(type, [])
+    return {"responses": responses}
+    @app.post("/api/game_responses/save")
+async def save_game_responses(request: Request):
+    data = await request.json()
+    type_ = data.get('type')
+    responses = data.get('responses')
+
+    if not type_ or not isinstance(responses, list):
+        return {"success": False, "error": "بيانات غير مكتملة"}
+
+    path = 'data/game_responses.json'
+    if os.path.exists(path):
+        with open(path, 'r', encoding='utf-8') as f:
+            current_data = json.load(f)
+    else:
+        current_data = {}
+
+    current_data[type_] = responses
+
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(current_data, f, indent=4, ensure_ascii=False)
+
+    return {"success": True}
+    
