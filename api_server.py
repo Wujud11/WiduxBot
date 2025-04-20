@@ -1,8 +1,12 @@
 from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
 import json
 import os
 
 app = FastAPI()
+
+# تثبيت ملفات لوحة التحكم
+app.mount("/Panel", StaticFiles(directory="Panel"), name="panel")
 
 # ---------------------------------------
 # قنوات
