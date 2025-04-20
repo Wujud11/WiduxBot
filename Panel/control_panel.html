@@ -116,10 +116,18 @@
     </div>
 
     <div id="game-responses" class="section">
-      <h2>ردود اللعبة والطقطقة</h2>
-      <textarea id="game-responses-textarea" placeholder="كل سطر رد لطقطقة أو فوز أو خسارة"></textarea>
-      <button onclick="saveGameResponses()">حفظ ردود اللعبة</button>
-    </div>
+  <h2>ردود اللعبة والطقطقة</h2>
+
+  <label for="response-type-selector">اختار نوع الرد:</label>
+  <select id="response-type-selector">
+    <!-- الأنواع يتم تعبئتها تلقائيًا من السكربت -->
+  </select>
+
+  <label for="game-responses-textarea">الردود (كل سطر رد منفصل):</label>
+  <textarea id="game-responses-textarea" placeholder="اكتب الردود هنا، كل رد في سطر"></textarea>
+
+  <button onclick="saveGameResponses()">حفظ الردود</button>
+</div>
 
   </main>
 
