@@ -8,11 +8,12 @@
     body {
       background-color: #121212;
       color: #ffffff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: row-reverse;
     }
     aside {
-      position: fixed;
-      top: 0;
-      right: 0;
       width: 220px;
       height: 100vh;
       background-color: #1f1f1f;
@@ -20,22 +21,22 @@
       display: flex;
       flex-direction: column;
       gap: 1rem;
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      transition: transform 0.3s ease;
+      z-index: 1000;
     }
-    aside button {
-      background-color: #7c3aed;
-      border: none;
-      padding: 10px;
-      font-weight: bold;
-      color: white;
-      cursor: pointer;
-      border-radius: 8px;
-    }
-    aside button:hover {
-      background-color: #5b21b6;
+    aside.hidden {
+      transform: translateX(100%);
     }
     main {
+      flex: 1;
       margin-right: 240px;
       padding: 2rem;
+      overflow-y: auto;
+      transition: margin-right 0.3s ease;
     }
     .section {
       display: none;
@@ -54,12 +55,44 @@
     h2 {
       margin-bottom: 20px;
     }
+    /* زر الهامبرغر */
+    #menu-toggle {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 28px;
+      cursor: pointer;
+      z-index: 1100;
+      display: none;
+    }
+    /* responsive */
+    @media (max-width: 768px) {
+      aside {
+        transform: translateX(100%);
+      }
+      aside.show {
+        transform: translateX(0);
+      }
+      main {
+        margin-right: 0;
+        width: 100%;
+      }
+      #menu-toggle {
+        display: block;
+      }
+    }
   </style>
 </head>
 
 <body>
 
-  <aside>
+  <!-- زر القائمة -->
+  <button id="menu-toggle">&#9776;</button>
+
+  <aside id="sidebar">
     <button onclick="showSection('channels')">إدارة القنوات</button>
     <button onclick="showSection('mention-settings')">إعدادات المنشن</button>
     <button onclick="showSection('special-replies')">الردود الخاصة</button>
@@ -69,7 +102,6 @@
   </aside>
 
   <main>
-
     <div id="channels" class="section">
       <h2>إدارة القنوات</h2>
       <input type="text" id="new-channel" placeholder="اسم القناة الجديد">
@@ -118,21 +150,38 @@
 
     <div id="game-responses" class="section">
       <h2>ردود اللعبة والطقطقة</h2>
-
       <label for="response-type-selector">اختار نوع الرد:</label>
       <select id="response-type-selector">
         <!-- يتم تعبئتها تلقائياً -->
       </select>
-
       <label for="game-responses-textarea">الردود (كل سطر رد منفصل):</label>
       <textarea id="game-responses-textarea" placeholder="اكتب الردود هنا، كل رد في سطر"></textarea>
-
       <button onclick="saveGameResponses()">حفظ الردود</button>
     </div>
-
   </main>
 
   <script src="/Panel/control_panel.js"></script>
+
+  <script>
+    // تحكم بزر القائمة
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.getElementById('sidebar');
+
+    menuToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('show');
+    });
+
+    function showSection(sectionId) {
+      const sections = document.querySelectorAll('.section');
+      sections.forEach(section => section.classList.remove('active'));
+      document.getElementById(sectionId).classList.add('active');
+
+      // بالجوال نخفي السايدبار لما يختار قسم
+      if (window.innerWidth <= 768) {
+        sidebar.classList.remove('show');
+      }
+    }
+  </script>
 
 </body>
 </html>
