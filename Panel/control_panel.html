@@ -43,7 +43,7 @@
     .section.active {
       display: block;
     }
-    textarea, input {
+    textarea, input, select {
       background-color: #2c2c2c;
       color: white;
       border: 1px solid #444;
@@ -69,6 +69,7 @@
   </aside>
 
   <main>
+
     <div id="channels" class="section">
       <h2>إدارة القنوات</h2>
       <input type="text" id="new-channel" placeholder="اسم القناة الجديد">
@@ -116,24 +117,22 @@
     </div>
 
     <div id="game-responses" class="section">
-  <h2>ردود اللعبة والطقطقة</h2>
+      <h2>ردود اللعبة والطقطقة</h2>
 
-  <label for="response-type-selector">اختار نوع الرد:</label>
-  <select id="response-type-selector">
-    <!-- الأنواع يتم تعبئتها تلقائيًا من السكربت -->
-  </select>
+      <label for="response-type-selector">اختار نوع الرد:</label>
+      <select id="response-type-selector">
+        <!-- يتم تعبئتها تلقائياً -->
+      </select>
 
-  <label for="game-responses-textarea">الردود (كل سطر رد منفصل):</label>
-  <textarea id="game-responses-textarea" placeholder="اكتب الردود هنا، كل رد في سطر"></textarea>
+      <label for="game-responses-textarea">الردود (كل سطر رد منفصل):</label>
+      <textarea id="game-responses-textarea" placeholder="اكتب الردود هنا، كل رد في سطر"></textarea>
 
-  <button onclick="saveGameResponses()">حفظ الردود</button>
-</div>
+      <button onclick="saveGameResponses()">حفظ الردود</button>
+    </div>
 
   </main>
 
-<script>
-<script src="/Panel/control_panel.js"></script>
-</script>
+  <script src="/Panel/control_panel.js"></script>
 
 </body>
 </html>
